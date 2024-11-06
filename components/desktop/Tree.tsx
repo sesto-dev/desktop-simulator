@@ -10,7 +10,8 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ChevronRight, Folder, File } from "lucide-react";
-import type { Item } from "./desktop";
+
+import type { Item } from "@/components/desktop/Desktop";
 
 interface TreeProps {
   item: Item;

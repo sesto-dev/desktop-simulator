@@ -13,8 +13,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { Toaster, toast } from "sonner";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { toast } from "sonner";
 
 import AppSidebar from "@/components/desktop/Sidebar";
 import { DragDropArea } from "@/components/desktop/DragAndDropArea";
@@ -408,97 +407,94 @@ const Desktop: React.FC = () => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <SidebarProvider>
-        <div ref={desktopRef} className="flex h-screen" tabIndex={-1}>
-          <Toaster />
-          <AppSidebar items={items} />
-          <div className="flex-1 p-4 relative">
-            <ContextMenu>
-              <ContextMenuTrigger className="min-h-full w-full">
-                <div className="min-h-full w-full">
-                  <DragDropArea
-                    items={items.filter((item) => item.parentId === null)}
-                    moveItem={moveItem}
-                    openWindow={openWindow}
-                    setModalState={setModalState}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                    deleteItem={deleteItem}
-                    parentPath="/desktop"
-                  />
-                </div>
-              </ContextMenuTrigger>
-              <ContextMenuContent className="w-64">
-                <ContextMenuItem
-                  onSelect={() =>
-                    setModalState({
-                      open: true,
-                      type: "new",
-                      itemType: "folder",
-                      parentId: null,
-                      item: null,
-                    })
-                  }
-                >
-                  <Folder className="mr-2 h-4 w-4" />
-                  <span>New Folder</span>
-                </ContextMenuItem>
-                <ContextMenuItem
-                  onSelect={() =>
-                    setModalState({
-                      open: true,
-                      type: "new",
-                      itemType: "file",
-                      parentId: null,
-                      item: null,
-                    })
-                  }
-                >
-                  <File className="mr-2 h-4 w-4" />
-                  <span>New Bookmark</span>
-                </ContextMenuItem>
-              </ContextMenuContent>
-            </ContextMenu>
+      <div ref={desktopRef} className="flex h-screen">
+        <AppSidebar items={items} />
+        <div className="flex-1 p-4 relative">
+          <ContextMenu>
+            <ContextMenuTrigger className="min-h-full w-full">
+              <div className="min-h-full w-full">
+                <DragDropArea
+                  items={items.filter((item) => item.parentId === null)}
+                  moveItem={moveItem}
+                  openWindow={openWindow}
+                  setModalState={setModalState}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                  deleteItem={deleteItem}
+                  parentPath="/desktop"
+                />
+              </div>
+            </ContextMenuTrigger>
+            <ContextMenuContent className="w-64">
+              <ContextMenuItem
+                onSelect={() =>
+                  setModalState({
+                    open: true,
+                    type: "new",
+                    itemType: "folder",
+                    parentId: null,
+                    item: null,
+                  })
+                }
+              >
+                <Folder className="mr-2 h-4 w-4" />
+                <span>New Folder</span>
+              </ContextMenuItem>
+              <ContextMenuItem
+                onSelect={() =>
+                  setModalState({
+                    open: true,
+                    type: "new",
+                    itemType: "file",
+                    parentId: null,
+                    item: null,
+                  })
+                }
+              >
+                <File className="mr-2 h-4 w-4" />
+                <span>New Bookmark</span>
+              </ContextMenuItem>
+            </ContextMenuContent>
+          </ContextMenu>
 
-            {windows.map((windowItem) => {
-              const currentItem = findItemById(items, windowItem.itemId);
+          {windows.map((windowItem) => {
+            const currentItem = findItemById(items, windowItem.itemId);
 
-              if (!currentItem) return null; // Handle case where item might be deleted
+            if (!currentItem) return null; // Handle case where item might be deleted
 
-              return (
-                <DraggableWindow
-                  key={windowItem.id}
-                  windowItem={{
-                    ...windowItem,
-                    item: currentItem, // Use the latest item data
-                  }}
-                  closeWindow={closeWindow}
-                  minimizeWindow={minimizeWindow}
-                  moveWindow={moveWindow}
-                >
-                  <DragDropArea
-                    items={currentItem.content || []}
-                    moveItem={moveItem}
-                    openWindow={openWindow}
-                    setModalState={setModalState}
-                    parentId={currentItem.id}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                    deleteItem={deleteItem}
-                    parentPath={currentItem.path}
-                  />
-                </DraggableWindow>
-              );
-            })}
+            return (
+              <DraggableWindow
+                key={windowItem.id}
+                windowItem={{
+                  ...windowItem,
+                  item: currentItem, // Use the latest item data
+                }}
+                closeWindow={closeWindow}
+                minimizeWindow={minimizeWindow}
+                moveWindow={moveWindow}
+              >
+                <DragDropArea
+                  items={currentItem.content || []}
+                  moveItem={moveItem}
+                  openWindow={openWindow}
+                  setModalState={setModalState}
+                  parentId={currentItem.id}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                  deleteItem={deleteItem}
+                  parentPath={currentItem.path}
+                />
+              </DraggableWindow>
+            );
+          })}
 
-            <ItemModal
-              modalState={modalState}
-              setModalState={setModalState}
-              handleItemOperation={handleItemOperation}
-            />
-          </div>
+          <ItemModal
+            modalState={modalState}
+            setModalState={setModalState}
+            handleItemOperation={handleItemOperation}
+          />
         </div>
-      </SidebarProvider>
+      </div>
     </DndProvider>
   );
 };

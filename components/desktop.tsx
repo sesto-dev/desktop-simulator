@@ -1,7 +1,16 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect } from "react";
-import { DndProvider, useDrag, useDrop } from "react-dnd";
+import React, { useState, useCallback, useRef, useEffect, memo } from "react";
+import {
+  DndProvider,
+  useDrag,
+  useDrop,
+  DragSourceMonitor,
+  DropTargetMonitor,
+} from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import {
   Folder,
@@ -12,6 +21,7 @@ import {
   ChevronLeft,
   Trash2,
   Check,
+  ChevronRight,
 } from "lucide-react";
 import {
   ContextMenu,
@@ -22,22 +32,59 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
+import { Toaster, toast } from "sonner";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarProvider,
+  SidebarRail,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
-interface Item {
+import Tree from "./tree";
+
+export interface Item {
   id: string;
   name: string;
   type: "file" | "folder";
   content?: Item[];
   link?: string;
   parentId: string | null;
+  path: string;
 }
 
-interface Window {
+interface WindowItem {
   id: string;
-  item: Item;
+  itemId: string; // Updated to reference item by ID
   position: { x: number; y: number };
   size: { width: number; height: number };
   isMinimized: boolean;
+}
+
+interface ModalState {
+  open: boolean;
+  type: "new" | "edit" | "rename" | null;
+  itemType: "file" | "folder" | null;
+  parentId: string | null;
+  item: Item | null;
+}
+
+// Define DropResult interface
+interface DropResult {
+  id: string;
 }
 
 const initialItems: Item[] = [
@@ -52,9 +99,11 @@ const initialItems: Item[] = [
         type: "file",
         link: "https://example.com/resume",
         parentId: "1",
+        path: "/desktop/Documents/Resume",
       },
     ],
     parentId: null,
+    path: "/desktop/Documents",
   },
   {
     id: "2",
@@ -67,9 +116,11 @@ const initialItems: Item[] = [
         type: "file",
         link: "https://example.com/photo",
         parentId: "2",
+        path: "/desktop/Images/Photo",
       },
     ],
     parentId: null,
+    path: "/desktop/Images",
   },
   {
     id: "3",
@@ -77,130 +128,252 @@ const initialItems: Item[] = [
     type: "file",
     link: "https://example.com/notes",
     parentId: null,
+    path: "/desktop/Notes",
   },
 ];
 
 const Desktop: React.FC = () => {
   const [items, setItems] = useState<Item[]>(initialItems);
-  const [windows, setWindows] = useState<Window[]>([]);
-  const [contextMenuState, setContextMenuState] = useState<
-    "default" | "newFolder" | "newBookmark"
-  >("default");
-  const [newItemName, setNewItemName] = useState("");
-  const [newItemLink, setNewItemLink] = useState("");
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [windows, setWindows] = useState<WindowItem[]>([]);
+  const [modalState, setModalState] = useState<ModalState>({
+    open: false,
+    type: null,
+    itemType: null,
+    parentId: null,
+    item: null,
+  });
   const [draggedItem, setDraggedItem] = useState<Item | null>(null);
-  const [activeParentId, setActiveParentId] = useState<string | null>(null);
 
-  const inputRef = useRef<HTMLInputElement>(null);
+  const desktopRef = useRef<HTMLDivElement>(null);
 
-  const moveItem = useCallback((draggedId: string, targetId: string | null) => {
-    setItems((prevItems) => {
-      const updateItemsRecursively = (
-        items: Item[],
-        draggedId: string,
-        targetId: string | null
-      ): Item[] => {
-        return items.map((item) => {
-          if (item.id === draggedId) {
-            return { ...item, parentId: targetId };
-          }
-          if (item.content) {
-            return {
-              ...item,
-              content: updateItemsRecursively(
-                item.content,
-                draggedId,
-                targetId
-              ),
-            };
-          }
-          return item;
-        });
-      };
-
-      const updatedItems = updateItemsRecursively(
-        prevItems,
-        draggedId,
-        targetId
-      );
-      return updatedItems.reduce((acc: Item[], item) => {
-        if (item.parentId === null) {
-          acc.push(item);
-        } else {
-          const parent =
-            acc.find((i) => i.id === item.parentId) ||
-            updatedItems.find((i) => i.id === item.parentId);
-          if (parent && parent.type === "folder") {
-            parent.content = parent.content
-              ? [...parent.content, item]
-              : [item];
+  const getItemPath = useCallback((items: Item[], itemId: string): string => {
+    const findPath = (currentItems: Item[]): string | null => {
+      for (const item of currentItems) {
+        if (item.id === itemId) {
+          return item.path;
+        }
+        if (item.content) {
+          const path = findPath(item.content);
+          if (path) {
+            return path;
           }
         }
-        return acc;
-      }, []);
-    });
-  }, []);
-
-  const handleCreateNewItem = useCallback(() => {
-    if (!newItemName) return;
-
-    const newItem: Item = {
-      id: Date.now().toString(),
-      name: newItemName,
-      type: contextMenuState === "newFolder" ? "folder" : "file",
-      parentId: activeParentId,
-      ...(contextMenuState === "newBookmark"
-        ? { link: newItemLink }
-        : { content: [] }),
+      }
+      return null;
     };
 
-    setItems((prevItems) => {
-      const updateItemsRecursively = (items: Item[]): Item[] => {
-        return items.map((item) => {
-          if (item.id === activeParentId) {
-            return { ...item, content: [...(item.content || []), newItem] };
-          }
-          if (item.content) {
-            return { ...item, content: updateItemsRecursively(item.content) };
-          }
-          return item;
-        });
-      };
+    return findPath(items) || "/desktop";
+  }, []);
 
-      if (activeParentId === null) {
-        return [...prevItems, newItem];
-      } else {
-        return updateItemsRecursively(prevItems);
+  const findItemById = useCallback((items: Item[], id: string): Item | null => {
+    for (const item of items) {
+      if (item.id === id) return item;
+      if (item.type === "folder" && item.content) {
+        const found = findItemById(item.content, id);
+        if (found) return found;
       }
-    });
+    }
+    return null;
+  }, []);
 
-    setWindows((prevWindows) => {
-      return prevWindows.map((window) => {
-        if (window.item.id === activeParentId) {
-          return {
-            ...window,
-            item: {
-              ...window.item,
-              content: [...(window.item.content || []), newItem],
-            },
-          };
-        }
-        return window;
+  const moveItem = useCallback(
+    (draggedId: string, targetId: string | null, sourcePath: string) => {
+      setItems((prevItems) => {
+        // Immutable removal
+        const findItemAndRemove = (
+          items: Item[],
+          id: string
+        ): [Item | null, Item[]] => {
+          let removedItem: Item | null = null;
+
+          const newItems = items.reduce<Item[]>((acc, item) => {
+            if (item.id === id) {
+              removedItem = { ...item };
+              return acc;
+            }
+            if (item.content) {
+              const [found, updatedContent] = findItemAndRemove(
+                item.content,
+                id
+              );
+              if (found) {
+                acc.push({ ...item, content: updatedContent });
+                removedItem = found;
+                return acc;
+              }
+            }
+            acc.push(item);
+            return acc;
+          }, []);
+
+          return [removedItem, newItems];
+        };
+
+        const [draggedItem, newItems] = findItemAndRemove(prevItems, draggedId);
+        if (!draggedItem) return prevItems;
+
+        // Immutable insertion
+        const insertItem = (
+          items: Item[],
+          item: Item,
+          targetId: string | null
+        ): Item[] => {
+          if (targetId === null) {
+            const newPath = `/desktop/${item.name}`;
+            return [...items, { ...item, parentId: null, path: newPath }];
+          }
+
+          return items.map((i) => {
+            if (i.id === targetId) {
+              const newPath = `${i.path}/${item.name}`;
+              return {
+                ...i,
+                content: i.content
+                  ? [
+                      ...i.content,
+                      { ...item, parentId: targetId, path: newPath },
+                    ]
+                  : [{ ...item, parentId: targetId, path: newPath }],
+              };
+            }
+            if (i.content) {
+              return { ...i, content: insertItem(i.content, item, targetId) };
+            }
+            return i;
+          });
+        };
+
+        const updatedItems = insertItem(newItems, draggedItem, targetId);
+
+        // Get the correct target path
+        const targetPath = targetId
+          ? getItemPath(updatedItems, targetId)
+          : "/desktop";
+
+        // Log the operation using Sonner
+        toast.success(
+          `Transferring ${draggedItem.name} ${draggedItem.type} from ${sourcePath} to ${targetPath}`
+        );
+
+        return updatedItems;
       });
-    });
+    },
+    [getItemPath]
+  );
 
-    setNewItemName("");
-    setNewItemLink("");
-    setContextMenuState("default");
-  }, [contextMenuState, newItemName, newItemLink, activeParentId]);
+  const handleItemOperation = useCallback(
+    (name: string, link?: string) => {
+      if (modalState.type === "new") {
+        const parentPath = modalState.parentId
+          ? getItemPath(items, modalState.parentId)
+          : "/desktop";
+        const newItem: Item = {
+          id: Date.now().toString(),
+          name,
+          type: modalState.itemType!,
+          parentId: modalState.parentId,
+          path: `${parentPath}/${name}`,
+          ...(modalState.itemType === "file" ? { link } : { content: [] }),
+        };
+
+        setItems((prevItems) => {
+          const updateItemsRecursively = (items: Item[]): Item[] => {
+            return items.map((item) => {
+              if (item.id === modalState.parentId) {
+                return {
+                  ...item,
+                  content: [...(item.content || []), newItem],
+                };
+              }
+              if (item.content) {
+                return {
+                  ...item,
+                  content: updateItemsRecursively(item.content),
+                };
+              }
+              return item;
+            });
+          };
+
+          if (modalState.parentId === null) {
+            return [...prevItems, newItem];
+          } else {
+            return updateItemsRecursively(prevItems);
+          }
+        });
+
+        setWindows((prevWindows) => {
+          return prevWindows.map((window) => {
+            if (window.itemId === modalState.parentId) {
+              // No longer needed to update windows here
+              return window;
+            }
+            return window;
+          });
+        });
+      } else if (modalState.type === "edit" || modalState.type === "rename") {
+        if (!modalState.item) {
+          // Early return or handle error as needed
+          toast.error("No item selected for editing.");
+          return;
+        }
+
+        setItems((prevItems) => {
+          const updateItemRecursively = (items: Item[]): Item[] => {
+            return items.map((item) => {
+              if (item.id === modalState.item!.id) {
+                const updatedItem = { ...item, name };
+                if (item.parentId) {
+                  const parentPath = getItemPath(prevItems, item.parentId);
+                  updatedItem.path = `${parentPath}/${name}`;
+                } else {
+                  updatedItem.path = `/desktop/${name}`;
+                }
+                if (item.type === "file" && link) {
+                  updatedItem.link = link;
+                }
+                return updatedItem;
+              }
+              if (item.content) {
+                return {
+                  ...item,
+                  content: updateItemRecursively(item.content),
+                };
+              }
+              return item;
+            });
+          };
+
+          return updateItemRecursively(prevItems);
+        });
+
+        setWindows((prevWindows) => {
+          return prevWindows.map((window) => {
+            if (window.itemId === modalState.item!.id) {
+              return window; // No need to update since window references the item by ID
+            }
+            return window;
+          });
+        });
+      }
+
+      setModalState({
+        open: false,
+        type: null,
+        itemType: null,
+        parentId: null,
+        item: null,
+      });
+    },
+    [modalState, items, getItemPath]
+  );
 
   const openWindow = useCallback((item: Item) => {
     setWindows((prev) => [
       ...prev,
       {
         id: Date.now().toString(),
-        item,
+        itemId: item.id, // Reference to the folder's ID
         position: { x: 50 + prev.length * 20, y: 50 + prev.length * 20 },
         size: { width: 400, height: 300 },
         isMinimized: false,
@@ -229,245 +402,218 @@ const Desktop: React.FC = () => {
     []
   );
 
-  const handleDragStart = (item: Item) => {
+  const handleDragStart = useCallback((item: Item) => {
     setDraggedItem(item);
-  };
+  }, []);
 
-  const handleDragEnd = () => {
+  const handleDragEnd = useCallback(() => {
     setDraggedItem(null);
-  };
+  }, []);
 
   const deleteItem = useCallback((itemId: string) => {
     setItems((prevItems) => {
       const deleteItemRecursively = (items: Item[]): Item[] => {
-        return items.filter((item) => {
-          if (item.id === itemId) {
-            return false;
-          }
-          if (item.content) {
-            item.content = deleteItemRecursively(item.content);
-          }
-          return true;
-        });
+        return items
+          .filter((item) => item.id !== itemId)
+          .map((item) => ({
+            ...item,
+            content: item.content
+              ? deleteItemRecursively(item.content)
+              : undefined,
+          }));
       };
 
       return deleteItemRecursively(prevItems);
     });
 
-    setWindows((prevWindows) =>
-      prevWindows.filter((w) => w.item.id !== itemId)
+    setWindows(
+      (prevWindows) => prevWindows.filter((w) => w.itemId !== itemId) // Remove windows referencing the deleted item
     );
+
+    toast.success("Item deleted successfully.");
   }, []);
 
-  const [, drop] = useDrop(
-    () => ({
-      accept: "ITEM",
-      drop: (droppedItem: { id: string }, monitor) => {
-        if (!monitor.didDrop()) {
-          moveItem(droppedItem.id, null);
-        }
-      },
-    }),
-    [moveItem]
-  );
-
-  useEffect(() => {
-    if (contextMenuState !== "default" && inputRef.current) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 0);
-    }
-  }, [contextMenuState]);
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleCreateNewItem();
-    } else if (e.key === "Escape") {
-      setContextMenuState("default");
-      setNewItemName("");
-      setNewItemLink("");
-    }
+  const convertToTreeFormat = (items: Item[]): any[] => {
+    return items.map((item) => {
+      if (item.type === "folder" && item.content) {
+        return [item.name, ...convertToTreeFormat(item.content)];
+      }
+      return item.name;
+    });
   };
 
   return (
-    <div
-      ref={(node) => {
-        if (node) {
-          drop(node as unknown as HTMLElement);
-        }
-      }}
-      className="bg-blue-100 min-h-screen p-4 relative"
-    >
-      <ContextMenu>
-        <ContextMenuTrigger className="flex-1 h-full">
-          <div className="min-h-screen">
-            <DesktopContent
-              items={items.filter((item) => item.parentId === null)}
-              moveItem={moveItem}
-              openWindow={openWindow}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              deleteItem={deleteItem}
-              setActiveParentId={setActiveParentId}
-            />
-          </div>
-        </ContextMenuTrigger>
-        <ContextMenuContent className="w-64">
-          <AnimatePresence mode="wait">
-            {contextMenuState === "default" && (
-              <motion.div
-                key="default"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                transition={{ duration: 0.2 }}
-              >
+    <DndProvider backend={HTML5Backend}>
+      <SidebarProvider>
+        <div ref={desktopRef} className="flex h-screen" tabIndex={-1}>
+          <Toaster />
+          <AppSidebar items={items} />
+          <div className="flex-1 p-4 relative">
+            <ContextMenu>
+              <ContextMenuTrigger className="min-h-full w-full">
+                <div className="min-h-full w-full">
+                  <DragDropArea
+                    items={items.filter((item) => item.parentId === null)}
+                    moveItem={moveItem}
+                    openWindow={openWindow}
+                    setModalState={setModalState}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                    deleteItem={deleteItem}
+                    parentPath="/desktop"
+                  />
+                </div>
+              </ContextMenuTrigger>
+              <ContextMenuContent className="w-64">
                 <ContextMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    setContextMenuState("newFolder");
-                  }}
+                  onSelect={() =>
+                    setModalState({
+                      open: true,
+                      type: "new",
+                      itemType: "folder",
+                      parentId: null,
+                      item: null,
+                    })
+                  }
                 >
                   <Folder className="mr-2 h-4 w-4" />
                   <span>New Folder</span>
                 </ContextMenuItem>
                 <ContextMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    setContextMenuState("newBookmark");
-                  }}
+                  onSelect={() =>
+                    setModalState({
+                      open: true,
+                      type: "new",
+                      itemType: "file",
+                      parentId: null,
+                      item: null,
+                    })
+                  }
                 >
                   <File className="mr-2 h-4 w-4" />
                   <span>New Bookmark</span>
                 </ContextMenuItem>
-              </motion.div>
-            )}
-            {contextMenuState === "newFolder" && (
-              <motion.div
-                key="newFolder"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                transition={{ duration: 0.2 }}
-              >
-                <div className="p-2">
-                  <button
-                    onClick={() => setContextMenuState("default")}
-                    className="mb-2 p-1 hover:bg-gray-100 rounded-full"
-                    aria-label="Back"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <Input
-                    ref={inputRef}
-                    value={newItemName}
-                    onChange={(e) => setNewItemName(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Folder name"
-                    className="mb-2"
-                  />
-                  <Button onClick={handleCreateNewItem} className="w-full">
-                    <Check className="mr-2 h-4 w-4" />
-                    Create Folder
-                  </Button>
-                </div>
-              </motion.div>
-            )}
-            {contextMenuState === "newBookmark" && (
-              <motion.div
-                key="newBookmark"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                transition={{ duration: 0.2 }}
-              >
-                <div className="p-2">
-                  <button
-                    onClick={() => setContextMenuState("default")}
-                    className="mb-2 p-1 hover:bg-gray-100 rounded-full"
-                    aria-label="Back"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <Input
-                    ref={inputRef}
-                    value={newItemName}
-                    onChange={(e) => setNewItemName(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Bookmark name"
-                    className="mb-2"
-                  />
-                  <Input
-                    value={newItemLink}
-                    onChange={(e) => setNewItemLink(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="https://example.com"
-                    className="mb-2"
-                  />
-                  <Button onClick={handleCreateNewItem} className="w-full">
-                    <Check className="mr-2 h-4 w-4" />
-                    Create Bookmark
-                  </Button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </ContextMenuContent>
-      </ContextMenu>
+              </ContextMenuContent>
+            </ContextMenu>
 
-      {windows.map((windowItem) => (
-        <DraggableWindow
-          key={windowItem.id}
-          windowItem={windowItem}
-          closeWindow={closeWindow}
-          minimizeWindow={minimizeWindow}
-          moveWindow={moveWindow}
-        >
-          <DesktopContent
-            items={windowItem.item.content || []}
-            moveItem={moveItem}
-            openWindow={openWindow}
-            parentId={windowItem.item.id}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            deleteItem={deleteItem}
-            setActiveParentId={setActiveParentId}
-          />
-        </DraggableWindow>
-      ))}
-    </div>
+            {windows.map((windowItem) => {
+              const currentItem = findItemById(items, windowItem.itemId);
+
+              if (!currentItem) return null; // Handle case where item might be deleted
+
+              return (
+                <DraggableWindow
+                  key={windowItem.id}
+                  windowItem={{
+                    ...windowItem,
+                    item: currentItem, // Use the latest item data
+                  }}
+                  closeWindow={closeWindow}
+                  minimizeWindow={minimizeWindow}
+                  moveWindow={moveWindow}
+                >
+                  <DragDropArea
+                    items={currentItem.content || []}
+                    moveItem={moveItem}
+                    openWindow={openWindow}
+                    setModalState={setModalState}
+                    parentId={currentItem.id}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                    deleteItem={deleteItem}
+                    parentPath={currentItem.path}
+                  />
+                </DraggableWindow>
+              );
+            })}
+
+            <ItemModal
+              modalState={modalState}
+              setModalState={setModalState}
+              handleItemOperation={handleItemOperation}
+            />
+          </div>
+        </div>
+      </SidebarProvider>
+    </DndProvider>
   );
 };
 
-const DesktopContent: React.FC<{
+function AppSidebar({
+  items,
+}: React.ComponentProps<typeof Sidebar> & { items: Item[] }) {
+  const treeData = convertToTreeFormat(items);
+
+  return (
+    <Sidebar>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Files</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {items.map((item) => (
+                <Tree key={item.id} item={item} />
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarRail />
+    </Sidebar>
+  );
+}
+
+interface TreeProps {
+  item: Item;
+}
+
+interface DragDropAreaProps {
   items: Item[];
-  moveItem: (draggedId: string, targetId: string | null) => void;
+  moveItem: (
+    draggedId: string,
+    targetId: string | null,
+    sourcePath: string
+  ) => void;
   openWindow: (item: Item) => void;
+  setModalState: React.Dispatch<React.SetStateAction<ModalState>>;
   parentId?: string | null;
   onDragStart: (item: Item) => void;
   onDragEnd: () => void;
   deleteItem: (itemId: string) => void;
-  setActiveParentId: React.Dispatch<React.SetStateAction<string | null>>;
-}> = ({
+  parentPath: string;
+}
+
+const DragDropArea: React.FC<DragDropAreaProps> = ({
   items,
   moveItem,
   openWindow,
+  setModalState,
   parentId = null,
   onDragStart,
   onDragEnd,
   deleteItem,
-  setActiveParentId,
+  parentPath,
 }) => {
-  const [, drop] = useDrop(
-    () => ({
-      accept: "ITEM",
-      drop: (droppedItem: Item) => {
-        moveItem(droppedItem.id, parentId);
-      },
+  const [{ isOver, canDrop }, drop] = useDrop<
+    Item,
+    DropResult,
+    { isOver: boolean; canDrop: boolean }
+  >({
+    accept: "ITEM",
+    drop: (
+      droppedItem: Item,
+      monitor: DropTargetMonitor
+    ): DropResult | undefined => {
+      if (!monitor.didDrop()) {
+        return { id: parentId ?? "desktop" };
+      }
+      return undefined;
+    },
+    collect: (monitor) => ({
+      isOver: monitor.isOver({ shallow: true }),
+      canDrop: monitor.canDrop(),
     }),
-    [moveItem, parentId]
-  );
+  });
 
   return (
     <div
@@ -476,9 +622,15 @@ const DesktopContent: React.FC<{
           drop(node as unknown as HTMLElement);
         }
       }}
-      className="min-h-full"
-      onClick={() => setActiveParentId(parentId)}
+      className={`relative min-h-full w-full ${
+        isOver && canDrop ? "bg-blue-200" : ""
+      }`}
     >
+      {isOver && canDrop && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-25 text-white text-lg">
+          Drop here
+        </div>
+      )}
       <div className="grid grid-cols-6 gap-4">
         {items.map((item) => (
           <DesktopItem
@@ -486,10 +638,10 @@ const DesktopContent: React.FC<{
             item={item}
             moveItem={moveItem}
             openWindow={openWindow}
+            setModalState={setModalState}
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
             deleteItem={deleteItem}
-            setActiveParentId={setActiveParentId}
           />
         ))}
       </div>
@@ -497,51 +649,68 @@ const DesktopContent: React.FC<{
   );
 };
 
-const DesktopItem: React.FC<{
+interface DesktopItemProps {
   item: Item;
-  moveItem: (draggedId: string, targetId: string | null) => void;
+  moveItem: (
+    draggedId: string,
+    targetId: string | null,
+    sourcePath: string
+  ) => void;
   openWindow: (item: Item) => void;
+  setModalState: React.Dispatch<React.SetStateAction<ModalState>>;
   onDragStart: (item: Item) => void;
   onDragEnd: () => void;
   deleteItem: (itemId: string) => void;
-  setActiveParentId: React.Dispatch<React.SetStateAction<string | null>>;
-}> = ({
+}
+
+const DesktopItem: React.FC<DesktopItemProps> = ({
   item,
   moveItem,
   openWindow,
+  setModalState,
   onDragStart,
   onDragEnd,
   deleteItem,
-  setActiveParentId,
 }) => {
-  const [{ isDragging }, drag] = useDrag(
-    () => ({
-      type: "ITEM",
-      item: () => {
-        onDragStart(item);
-        return { ...item };
-      },
-      collect: (monitor) => ({
-        isDragging: !!monitor.isDragging(),
-      }),
-      end: () => {
-        onDragEnd();
-      },
+  const [{ isDragging }, drag] = useDrag<
+    Item,
+    DropResult,
+    { isDragging: boolean }
+  >({
+    type: "ITEM",
+    item: () => {
+      onDragStart(item);
+      return item;
+    },
+    collect: (monitor: DragSourceMonitor) => ({
+      isDragging: !!monitor.isDragging(),
     }),
-    [item, onDragStart, onDragEnd]
-  );
+    end: (droppedItem: Item, monitor: DragSourceMonitor) => {
+      const dropResult = monitor.getDropResult<DropResult>();
+      if (dropResult && dropResult.id) {
+        moveItem(
+          droppedItem.id,
+          dropResult.id === "desktop" ? null : dropResult.id,
+          droppedItem.path
+        );
+      }
+      onDragEnd();
+    },
+  });
 
-  const [, drop] = useDrop(
-    () => ({
-      accept: "ITEM",
-      drop: (droppedItem: Item) => {
-        if (item.type === "folder") {
-          moveItem(droppedItem.id, item.id);
-        }
-      },
+  const [{ isOver, canDrop }, drop] = useDrop<
+    Item,
+    DropResult,
+    { isOver: boolean; canDrop: boolean }
+  >({
+    accept: "ITEM",
+    canDrop: (draggedItem: Item) => item.type === "folder",
+    drop: () => ({ id: item.id }),
+    collect: (monitor: DropTargetMonitor) => ({
+      isOver: monitor.isOver({ shallow: true }),
+      canDrop: monitor.canDrop(),
     }),
-    [item, moveItem]
-  );
+  });
 
   const handleClick = () => {
     if (item.type === "file" && item.link) {
@@ -551,18 +720,23 @@ const DesktopItem: React.FC<{
     }
   };
 
+  const isActive = isOver && canDrop;
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (item.type === "folder" && ref.current) {
+      drop(ref.current);
+    }
+  }, [drop, item.type]);
+
   return (
     <ContextMenu>
       <ContextMenuTrigger>
         <div
-          ref={(node) => {
-            if (item.type === "folder" && node) {
-              drop(node as unknown as HTMLElement);
-            }
-          }}
-          className={`flex flex-col items-center p-2 cursor-pointer ${
+          ref={ref}
+          className={`flex flex-col items-center p-2 cursor-pointer relative ${
             isDragging ? "opacity-50" : ""
-          }`}
+          } ${isActive ? "bg-blue-200" : ""}`}
           onClick={handleClick}
         >
           <div
@@ -580,36 +754,46 @@ const DesktopItem: React.FC<{
             )}
           </div>
           <span className="mt-2 text-sm text-center">{item.name}</span>
+          {isActive && item.type === "folder" && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white text-sm">
+              {item.path}
+            </div>
+          )}
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent className="w-64">
         {item.type === "file" ? (
           <ContextMenuItem
-            onSelect={(e) => {
-              e.preventDefault();
-              setActiveParentId(item.parentId);
-            }}
+            onSelect={() =>
+              setModalState({
+                open: true,
+                type: "edit",
+                itemType: "file",
+                parentId: item.parentId,
+                item,
+              })
+            }
           >
             <Edit className="mr-2 h-4 w-4" />
             <span>Edit Bookmark</span>
           </ContextMenuItem>
         ) : (
           <ContextMenuItem
-            onSelect={(e) => {
-              e.preventDefault();
-              setActiveParentId(item.id);
-            }}
+            onSelect={() =>
+              setModalState({
+                open: true,
+                type: "rename",
+                itemType: "folder",
+                parentId: item.parentId,
+                item,
+              })
+            }
           >
             <Edit className="mr-2 h-4 w-4" />
             <span>Rename Folder</span>
           </ContextMenuItem>
         )}
-        <ContextMenuItem
-          onSelect={(e) => {
-            e.preventDefault();
-            deleteItem(item.id);
-          }}
-        >
+        <ContextMenuItem onSelect={() => deleteItem(item.id)}>
           <Trash2 className="mr-2 h-4 w-4" />
           <span>Delete {item.type === "folder" ? "Folder" : "Bookmark"}</span>
         </ContextMenuItem>
@@ -618,13 +802,126 @@ const DesktopItem: React.FC<{
   );
 };
 
-const DraggableWindow: React.FC<{
-  windowItem: Window;
+interface ItemModalProps {
+  modalState: ModalState;
+  setModalState: React.Dispatch<React.SetStateAction<ModalState>>;
+  handleItemOperation: (name: string, link?: string) => void;
+}
+
+const ItemModal: React.FC<ItemModalProps> = ({
+  modalState,
+  setModalState,
+  handleItemOperation,
+}) => {
+  const [name, setName] = useState("");
+  const [link, setLink] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (modalState.open) {
+      setName(modalState.item?.name || "");
+      setLink(modalState.item?.link || "");
+      setTimeout(() => inputRef.current?.focus(), 0);
+    }
+  }, [modalState]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleItemOperation(name, link);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      setModalState({
+        open: false,
+        type: null,
+        itemType: null,
+        parentId: null,
+        item: null,
+      });
+    }
+  };
+
+  if (!modalState.open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+      onKeyDown={handleKeyDown}
+    >
+      <div className="bg-white p-4 rounded-lg w-96">
+        <form onSubmit={handleSubmit}>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">
+              {modalState.type === "new"
+                ? modalState.itemType === "folder"
+                  ? "New Folder"
+                  : "New Bookmark"
+                : modalState.type === "edit"
+                ? "Edit Bookmark"
+                : "Rename Folder"}
+            </h2>
+            <button
+              type="button"
+              onClick={() =>
+                setModalState({
+                  open: false,
+                  type: null,
+                  itemType: null,
+                  parentId: null,
+                  item: null,
+                })
+              }
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X className="h-6 w-4" />
+            </button>
+          </div>
+          <div className="space-y-4">
+            <Input
+              ref={inputRef}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={
+                modalState.itemType === "folder"
+                  ? "Folder name"
+                  : "Bookmark name"
+              }
+              required
+            />
+            {modalState.itemType === "file" && (
+              <Input
+                value={link}
+                onChange={(e) => setLink(e.target.value)}
+                placeholder="https://example.com"
+                required={modalState.type === "new"}
+              />
+            )}
+            <Button type="submit" className="w-full">
+              {modalState.type === "new" ? "Create" : "Save"}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+interface DraggableWindowProps {
+  windowItem: WindowItem & { item: Item };
   closeWindow: (id: string) => void;
   minimizeWindow: (id: string) => void;
   moveWindow: (id: string, position: { x: number; y: number }) => void;
   children: React.ReactNode;
-}> = ({ windowItem, closeWindow, minimizeWindow, moveWindow, children }) => {
+}
+
+const DraggableWindow: React.FC<DraggableWindowProps> = ({
+  windowItem,
+  closeWindow,
+  minimizeWindow,
+  moveWindow,
+  children,
+}) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
@@ -673,6 +970,7 @@ const DraggableWindow: React.FC<{
         top: windowItem.position.y,
         width: windowItem.size.width,
         height: windowItem.size.height,
+        zIndex: 1000,
       }}
     >
       <div
@@ -705,11 +1003,16 @@ const DraggableWindow: React.FC<{
   );
 };
 
-// Wrap Desktop with DndProvider and export
-const DesktopWrapper: React.FC = () => (
-  <DndProvider backend={HTML5Backend}>
-    <Desktop />
-  </DndProvider>
-);
+// Convert to Tree Format remains unchanged
+function convertToTreeFormat(items: Item[]): any[] {
+  return items.map((item) => {
+    if (item.type === "folder" && item.content) {
+      return [item.name, ...convertToTreeFormat(item.content)];
+    }
+    return item.name;
+  });
+}
 
-export default DesktopWrapper;
+export default function Component() {
+  return <Desktop />;
+}

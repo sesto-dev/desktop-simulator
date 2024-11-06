@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useCallback, useEffect } from "react";
 import { Minimize, X } from "lucide-react";
 import { WindowItem, Item } from "./Desktop";
@@ -59,7 +60,7 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
 
   return (
     <div
-      className="absolute bg-white rounded-lg shadow-lg overflow-hidden"
+      className="absolute backdrop-blur-xl bg-neutral-800/30 rounded-lg shadow-lg overflow-hidden"
       style={{
         left: windowItem.position.x,
         top: windowItem.position.y,
@@ -69,17 +70,11 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
       }}
     >
       <div
-        className="bg-gray-200 p-2 flex justify-between items-center cursor-move"
+        className="p-2 px-4 flex bg-neutral-700/30 justify-between items-center cursor-move"
         onMouseDown={handleMouseDown}
       >
-        <h3 className="font-bold">{windowItem.item.name}</h3>
+        <h3 className="text-sm">{windowItem.item.name}</h3>
         <div className="flex space-x-2">
-          <button
-            onClick={() => minimizeWindow(windowItem.id)}
-            className="focus:outline-none"
-          >
-            <Minimize className="h-4 w-4" />
-          </button>
           <button
             onClick={() => closeWindow(windowItem.id)}
             className="focus:outline-none"
@@ -89,7 +84,7 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
         </div>
       </div>
       <div
-        className="p-4 overflow-auto"
+        className="p-4 px-8 overflow-auto"
         style={{ height: "calc(100% - 40px)" }}
       >
         {children}

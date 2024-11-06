@@ -42,9 +42,9 @@ export default function AppSidebar({
   items,
 }: React.ComponentProps<typeof Sidebar> & { items: Item[] }) {
   return (
-    <Sidebar>
-      <SidebarContent>
-        <SidebarGroup>
+    <Sidebar className="bg-neutral-800/10 backdrop-blur-xl">
+      <SidebarContent className="bg-neutral-800/10 backdrop-blur-xl">
+        <SidebarGroup className="bg-neutral-800/10 backdrop-blur-xl">
           <SidebarGroupLabel>Changes</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>

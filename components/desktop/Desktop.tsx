@@ -19,6 +19,9 @@ import AppSidebar from "@/components/desktop/Sidebar";
 import { DragDropArea } from "@/components/desktop/DragAndDropArea";
 import { ItemModal } from "@/components/desktop/ItemModal";
 import { DraggableWindow } from "@/components/desktop/DraggableWindow";
+import DotPattern from "../ui/dot-pattern";
+import AnimatedGridPattern from "@/components/ui/animated-grid-pattern";
+import { cn } from "@/lib/utils";
 
 export interface Item {
   id: string;
@@ -405,61 +408,70 @@ const Desktop: React.FC = () => {
     });
   };
 
+  function Context() {
+    return (
+      <ContextMenu>
+        <ContextMenuTrigger className="min-h-full w-full">
+          <div className="min-h-full w-full">
+            <DragDropArea
+              items={items.filter((item) => item.parentId === null)}
+              moveItem={moveItem}
+              openWindow={openWindow}
+              setModalState={setModalState}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              deleteItem={deleteItem}
+              parentPath="/desktop"
+            />
+          </div>
+        </ContextMenuTrigger>
+        <ContextMenuContent className="w-64">
+          <ContextMenuItem
+            onSelect={() =>
+              setModalState({
+                open: true,
+                type: "new",
+                itemType: "folder",
+                parentId: null,
+                item: null,
+              })
+            }
+          >
+            <Folder className="mr-2 h-4 w-4" />
+            <span>New Folder</span>
+          </ContextMenuItem>
+          <ContextMenuItem
+            onSelect={() =>
+              setModalState({
+                open: true,
+                type: "new",
+                itemType: "file",
+                parentId: null,
+                item: null,
+              })
+            }
+          >
+            <File className="mr-2 h-4 w-4" />
+            <span>New Bookmark</span>
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
+    );
+  }
+
   return (
     <DndProvider backend={HTML5Backend}>
-      <div ref={desktopRef} className="flex h-screen">
+      <div ref={desktopRef} className="flex h-screen w-screen">
         <AppSidebar items={items} />
-        <div className="flex-1 p-4 relative">
-          <ContextMenu>
-            <ContextMenuTrigger className="min-h-full w-full">
-              <div className="min-h-full w-full">
-                <DragDropArea
-                  items={items.filter((item) => item.parentId === null)}
-                  moveItem={moveItem}
-                  openWindow={openWindow}
-                  setModalState={setModalState}
-                  onDragStart={handleDragStart}
-                  onDragEnd={handleDragEnd}
-                  deleteItem={deleteItem}
-                  parentPath="/desktop"
-                />
-              </div>
-            </ContextMenuTrigger>
-            <ContextMenuContent className="w-64">
-              <ContextMenuItem
-                onSelect={() =>
-                  setModalState({
-                    open: true,
-                    type: "new",
-                    itemType: "folder",
-                    parentId: null,
-                    item: null,
-                  })
-                }
-              >
-                <Folder className="mr-2 h-4 w-4" />
-                <span>New Folder</span>
-              </ContextMenuItem>
-              <ContextMenuItem
-                onSelect={() =>
-                  setModalState({
-                    open: true,
-                    type: "new",
-                    itemType: "file",
-                    parentId: null,
-                    item: null,
-                  })
-                }
-              >
-                <File className="mr-2 h-4 w-4" />
-                <span>New Bookmark</span>
-              </ContextMenuItem>
-            </ContextMenuContent>
-          </ContextMenu>
-
+        <div className="relative p-2 flex h-full w-full items-center justify-center overflow-hidden bg-background md:shadow-xl">
+          <DotPattern
+            className={cn(
+              "[mask-image:radial-gradient(300px_circle_at_center,white,transparent)]"
+            )}
+          />
+          <Context />
           {windows.map((windowItem) => {
             const currentItem = findItemById(items, windowItem.itemId);
-
             if (!currentItem) return null; // Handle case where item might be deleted
 
             return (
@@ -487,7 +499,6 @@ const Desktop: React.FC = () => {
               </DraggableWindow>
             );
           })}
-
           <ItemModal
             modalState={modalState}
             setModalState={setModalState}

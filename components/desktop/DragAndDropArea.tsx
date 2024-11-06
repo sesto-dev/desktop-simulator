@@ -10,6 +10,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { DesktopItem } from "@/components/desktop/DesktopItem";
+
 interface DragDropAreaProps {
   items: Item[];
   moveItem: (
@@ -74,7 +75,7 @@ export const DragDropArea: React.FC<DragDropAreaProps> = ({
           Drop here
         </div>
       )}
-      <div className="grid grid-cols-6 gap-4">
+      <div className="grid grid-cols-12 gap-4 p-4">
         {items.map((item) => (
           <DesktopItem
             key={item.id}

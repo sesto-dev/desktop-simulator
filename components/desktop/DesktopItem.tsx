@@ -102,7 +102,7 @@ export const DesktopItem: React.FC<DesktopItemProps> = ({
       <ContextMenuTrigger>
         <div
           ref={ref}
-          className={`flex flex-col items-center p-2 cursor-pointer relative ${
+          className={`flex flex-col items-center cursor-pointer relative ${
             isDragging ? "opacity-50" : ""
           } ${isActive ? "bg-blue-200" : ""}`}
           onClick={handleClick}
@@ -113,7 +113,7 @@ export const DesktopItem: React.FC<DesktopItemProps> = ({
                 drag(node as unknown as HTMLElement);
               }
             }}
-            className="w-16 h-16 flex items-center justify-center bg-white rounded-lg shadow-md"
+            className="p-2 flex items-center justify-center rounded-lg shadow-md border bg-neutral-800/30 backdrop-blur-xl border-neutral-800/60"
           >
             {item.type === "folder" ? (
               <Folder className="w-10 h-10 text-yellow-500" />
@@ -123,13 +123,13 @@ export const DesktopItem: React.FC<DesktopItemProps> = ({
           </div>
           <span className="mt-2 text-sm text-center">{item.name}</span>
           {isActive && item.type === "folder" && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white text-sm">
+            <div className="absolute inset-0 flex items-center justify-center bg-opacity-50 text-sm">
               {item.path}
             </div>
           )}
         </div>
       </ContextMenuTrigger>
-      <ContextMenuContent className="w-64">
+      <ContextMenuContent className="">
         {item.type === "file" ? (
           <ContextMenuItem
             onSelect={() =>

@@ -48,10 +48,10 @@ export const ItemModal: React.FC<ItemModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+      className="fixed inset-0 bg-opacity-50 flex items-center justify-center"
       onKeyDown={handleKeyDown}
     >
-      <div className="bg-white p-4 rounded-lg w-96">
+      <div className="bg-neutral-800/30 backdrop-blur-sm p-4 rounded-lg w-96">
         <form onSubmit={handleSubmit}>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">
@@ -74,7 +74,7 @@ export const ItemModal: React.FC<ItemModalProps> = ({
                   item: null,
                 })
               }
-              className="text-gray-500 hover:text-gray-700"
+              className=""
             >
               <X className="h-6 w-4" />
             </button>

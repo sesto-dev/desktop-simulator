@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useCallback, useEffect } from "react";
 import { Minimize, X } from "lucide-react";
-import { WindowItem, Item } from "./Desktop";
+import type { WindowItem, Item } from "@/types/desktop";
 
 interface DraggableWindowProps {
   windowItem: WindowItem & { item: Item };

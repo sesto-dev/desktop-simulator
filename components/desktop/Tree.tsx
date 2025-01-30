@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/collapsible";
 import { ChevronRight, Folder, File } from "lucide-react";
 
-import type { Item } from "@/components/desktop/Desktop";
+import type { Item } from "@/types/desktop";
 
 interface TreeProps {
   item: Item;

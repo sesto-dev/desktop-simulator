@@ -16,9 +16,8 @@ import {
   SidebarMenuSub,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { ChevronRightIcon } from "@radix-ui/react-icons";
 import Tree from "@/components/desktop/Tree";
-import { Item } from "./Desktop";
+import type { Item } from "@/types/desktop";
 
 // This is sample data.
 const data = {

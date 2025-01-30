@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { ModalState } from "./Desktop";
+import type { ModalState } from "@/types/desktop";
 
 interface ItemModalProps {
   modalState: ModalState;

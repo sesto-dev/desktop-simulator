@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useRef, useEffect, memo } from "react";
 import { Edit, Folder, File, Trash2 } from "lucide-react";
-import { DropResult, Item, ModalState } from "./Desktop";
+import type { DropResult, Item, ModalState } from "@/types/desktop";
 import {
   ContextMenu,
   ContextMenuContent,

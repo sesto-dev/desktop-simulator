@@ -20,85 +20,11 @@ import { DragDropArea } from "@/components/desktop/DragAndDropArea";
 import { ItemModal } from "@/components/desktop/ItemModal";
 import { DraggableWindow } from "@/components/desktop/DraggableWindow";
 import DotPattern from "../ui/dot-pattern";
-import AnimatedGridPattern from "@/components/ui/animated-grid-pattern";
 import { cn } from "@/lib/utils";
+import type { Item, WindowItem, ModalState } from "@/types/desktop";
+import { initialItems } from "@/config/desktop";
 
-export interface Item {
-  id: string;
-  name: string;
-  type: "file" | "folder";
-  content?: Item[];
-  link?: string;
-  parentId: string | null;
-  path: string;
-}
-
-export interface WindowItem {
-  id: string;
-  itemId: string; // Updated to reference item by ID
-  position: { x: number; y: number };
-  size: { width: number; height: number };
-  isMinimized: boolean;
-}
-
-export interface ModalState {
-  open: boolean;
-  type: "new" | "edit" | "rename" | null;
-  itemType: "file" | "folder" | null;
-  parentId: string | null;
-  item: Item | null;
-}
-
-export interface DropResult {
-  id: string;
-}
-
-const initialItems: Item[] = [
-  {
-    id: "1",
-    name: "Documents",
-    type: "folder",
-    content: [
-      {
-        id: "4",
-        name: "Resume",
-        type: "file",
-        link: "https://example.com/resume",
-        parentId: "1",
-        path: "/desktop/Documents/Resume",
-      },
-    ],
-    parentId: null,
-    path: "/desktop/Documents",
-  },
-  {
-    id: "2",
-    name: "Images",
-    type: "folder",
-    content: [
-      {
-        id: "5",
-        name: "Photo",
-        type: "file",
-        link: "https://example.com/photo",
-        parentId: "2",
-        path: "/desktop/Images/Photo",
-      },
-    ],
-    parentId: null,
-    path: "/desktop/Images",
-  },
-  {
-    id: "3",
-    name: "Notes",
-    type: "file",
-    link: "https://example.com/notes",
-    parentId: null,
-    path: "/desktop/Notes",
-  },
-];
-
-const Desktop: React.FC = () => {
+const DesktopWrapper: React.FC = () => {
   const [items, setItems] = useState<Item[]>(initialItems);
   const [windows, setWindows] = useState<WindowItem[]>([]);
   const [modalState, setModalState] = useState<ModalState>({
@@ -145,7 +71,6 @@ const Desktop: React.FC = () => {
   const moveItem = useCallback(
     (draggedId: string, targetId: string | null, sourcePath: string) => {
       setItems((prevItems) => {
-        // Immutable removal
         const findItemAndRemove = (
           items: Item[],
           id: string
@@ -178,7 +103,6 @@ const Desktop: React.FC = () => {
         const [draggedItem, newItems] = findItemAndRemove(prevItems, draggedId);
         if (!draggedItem) return prevItems;
 
-        // Immutable insertion
         const insertItem = (
           items: Item[],
           item: Item,
@@ -211,12 +135,10 @@ const Desktop: React.FC = () => {
 
         const updatedItems = insertItem(newItems, draggedItem, targetId);
 
-        // Get the correct target path
         const targetPath = targetId
           ? getItemPath(updatedItems, targetId)
           : "/desktop";
 
-        // Log the operation using Sonner
         toast.success(
           `Transferring ${draggedItem.name} ${draggedItem.type} from ${sourcePath} to ${targetPath}`
         );
@@ -271,7 +193,6 @@ const Desktop: React.FC = () => {
         setWindows((prevWindows) => {
           return prevWindows.map((window) => {
             if (window.itemId === modalState.parentId) {
-              // No longer needed to update windows here
               return window;
             }
             return window;
@@ -279,7 +200,6 @@ const Desktop: React.FC = () => {
         });
       } else if (modalState.type === "edit" || modalState.type === "rename") {
         if (!modalState.item) {
-          // Early return or handle error as needed
           toast.error("No item selected for editing.");
           return;
         }
@@ -316,7 +236,7 @@ const Desktop: React.FC = () => {
         setWindows((prevWindows) => {
           return prevWindows.map((window) => {
             if (window.itemId === modalState.item!.id) {
-              return window; // No need to update since window references the item by ID
+              return window;
             }
             return window;
           });
@@ -339,7 +259,7 @@ const Desktop: React.FC = () => {
       ...prev,
       {
         id: Date.now().toString(),
-        itemId: item.id, // Reference to the folder's ID
+        itemId: item.id,
         position: { x: 50 + prev.length * 20, y: 50 + prev.length * 20 },
         size: { width: 400, height: 300 },
         isMinimized: false,
@@ -392,9 +312,7 @@ const Desktop: React.FC = () => {
       return deleteItemRecursively(prevItems);
     });
 
-    setWindows(
-      (prevWindows) => prevWindows.filter((w) => w.itemId !== itemId) // Remove windows referencing the deleted item
-    );
+    setWindows((prevWindows) => prevWindows.filter((w) => w.itemId !== itemId));
 
     toast.success("Item deleted successfully.");
   }, []);
@@ -472,14 +390,14 @@ const Desktop: React.FC = () => {
           <Context />
           {windows.map((windowItem) => {
             const currentItem = findItemById(items, windowItem.itemId);
-            if (!currentItem) return null; // Handle case where item might be deleted
+            if (!currentItem) return null;
 
             return (
               <DraggableWindow
                 key={windowItem.id}
                 windowItem={{
                   ...windowItem,
-                  item: currentItem, // Use the latest item data
+                  item: currentItem,
                 }}
                 closeWindow={closeWindow}
                 minimizeWindow={minimizeWindow}
@@ -510,6 +428,4 @@ const Desktop: React.FC = () => {
   );
 };
 
-export default function Component() {
-  return <Desktop />;
-}
+export default DesktopWrapper;

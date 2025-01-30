@@ -2,13 +2,7 @@
 
 import { DropTargetMonitor } from "react-dnd";
 import { useDrop } from "react-dnd";
-import { DropResult, Item, ModalState } from "./Desktop";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
+import type { DropResult, Item, ModalState } from "@/types/desktop";
 import { DesktopItem } from "@/components/desktop/DesktopItem";
 
 interface DragDropAreaProps {
@@ -75,7 +69,7 @@ export const DragDropArea: React.FC<DragDropAreaProps> = ({
           Drop here
         </div>
       )}
-      <div className="grid grid-cols-12 gap-4 p-4">
+      <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-4 p-4">
         {items.map((item) => (
           <DesktopItem
             key={item.id}

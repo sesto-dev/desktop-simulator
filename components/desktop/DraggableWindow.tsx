@@ -79,7 +79,7 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
             onClick={() => closeWindow(windowItem.id)}
             className="focus:outline-none"
           >
-            <X className="h-4 w-4" />
+            <X className="size-4" />
           </button>
         </div>
       </div>

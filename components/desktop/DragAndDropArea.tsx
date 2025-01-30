@@ -65,11 +65,15 @@ export const DragDropArea: React.FC<DragDropAreaProps> = ({
       }`}
     >
       {isOver && canDrop && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-25 text-white text-lg">
-          Drop here
+        <div className="absolute inset-0 bg-blue-200 bg-opacity-50 flex items-center justify-center">
+          <span className="text-lg font-bold">Drop here</span>
         </div>
       )}
-      <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-4 p-4">
+      <div
+        className={`grid ${
+          parentPath == "/desktop" ? "grid-cols-12" : "grid-cols-3"
+        } gap-4 p-4`}
+      >
         {items.map((item) => (
           <DesktopItem
             key={item.id}

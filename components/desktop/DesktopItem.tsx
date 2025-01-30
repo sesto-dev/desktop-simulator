@@ -31,141 +31,153 @@ interface DesktopItemProps {
   deleteItem: (itemId: string) => void;
 }
 
-export const DesktopItem: React.FC<DesktopItemProps> = ({
-  item,
-  moveItem,
-  openWindow,
-  setModalState,
-  onDragStart,
-  onDragEnd,
-  deleteItem,
-}) => {
-  const [{ isDragging }, drag] = useDrag<
-    Item,
-    DropResult,
-    { isDragging: boolean }
-  >({
-    type: "ITEM",
-    item: () => {
-      onDragStart(item);
-      return item;
-    },
-    collect: (monitor: DragSourceMonitor) => ({
-      isDragging: !!monitor.isDragging(),
-    }),
-    end: (droppedItem: Item, monitor: DragSourceMonitor) => {
-      const dropResult = monitor.getDropResult<DropResult>();
-      if (dropResult && dropResult.id) {
-        moveItem(
-          droppedItem.id,
-          dropResult.id === "desktop" ? null : dropResult.id,
-          droppedItem.path
-        );
+export const DesktopItem: React.FC<DesktopItemProps> = memo(
+  ({
+    item,
+    moveItem,
+    openWindow,
+    setModalState,
+    onDragStart,
+    onDragEnd,
+    deleteItem,
+  }) => {
+    const [{ isDragging }, drag] = useDrag<
+      Item,
+      DropResult,
+      { isDragging: boolean }
+    >({
+      type: "ITEM",
+      item: () => {
+        onDragStart(item);
+        return item;
+      },
+      collect: (monitor: DragSourceMonitor) => ({
+        isDragging: !!monitor.isDragging(),
+      }),
+      end: (droppedItem: Item, monitor: DragSourceMonitor) => {
+        const dropResult = monitor.getDropResult<DropResult>();
+        if (dropResult && dropResult.id) {
+          moveItem(
+            droppedItem.id,
+            dropResult.id === "desktop" ? null : dropResult.id,
+            droppedItem.path
+          );
+        }
+        onDragEnd();
+      },
+    });
+
+    const [{ isOver, canDrop }, drop] = useDrop<
+      Item,
+      DropResult,
+      { isOver: boolean; canDrop: boolean }
+    >({
+      accept: "ITEM",
+      canDrop: (draggedItem: Item) => item.type === "folder",
+      drop: () => ({ id: item.id }),
+      collect: (monitor: DropTargetMonitor) => ({
+        isOver: monitor.isOver({ shallow: true }),
+        canDrop: monitor.canDrop(),
+      }),
+    });
+
+    const handleClick = () => {
+      if (item.type === "file" && item.link) {
+        window.open(item.link, "_blank");
+      } else if (item.type === "folder") {
+        openWindow(item);
       }
-      onDragEnd();
-    },
-  });
+    };
 
-  const [{ isOver, canDrop }, drop] = useDrop<
-    Item,
-    DropResult,
-    { isOver: boolean; canDrop: boolean }
-  >({
-    accept: "ITEM",
-    canDrop: (draggedItem: Item) => item.type === "folder",
-    drop: () => ({ id: item.id }),
-    collect: (monitor: DropTargetMonitor) => ({
-      isOver: monitor.isOver({ shallow: true }),
-      canDrop: monitor.canDrop(),
-    }),
-  });
+    const isActive = isOver && canDrop;
+    const ref = useRef<HTMLDivElement>(null);
 
-  const handleClick = () => {
-    if (item.type === "file" && item.link) {
-      window.open(item.link, "_blank");
-    } else if (item.type === "folder") {
-      openWindow(item);
-    }
-  };
+    useEffect(() => {
+      if (item.type === "folder" && ref.current) {
+        drop(ref.current);
+      }
+    }, [drop, item.type]);
 
-  const isActive = isOver && canDrop;
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (item.type === "folder" && ref.current) {
-      drop(ref.current);
-    }
-  }, [drop, item.type]);
-
-  return (
-    <ContextMenu>
-      <ContextMenuTrigger>
-        <div
-          ref={ref}
-          className={`flex flex-col items-center cursor-pointer relative ${
-            isDragging ? "opacity-50" : ""
-          } ${isActive ? "bg-blue-200" : ""}`}
-          onClick={handleClick}
-        >
+    return (
+      <ContextMenu>
+        <ContextMenuTrigger>
           <div
-            ref={(node) => {
-              if (node) {
-                drag(node as unknown as HTMLElement);
-              }
-            }}
-            className="p-2 flex items-center justify-center rounded-lg shadow-md border bg-neutral-800/30 backdrop-blur-xl border-neutral-800/60"
+            ref={ref}
+            className={`flex flex-col items-center cursor-pointer relative ${
+              isDragging ? "opacity-50" : ""
+            } ${isActive ? "bg-blue-200" : ""}`}
+            onClick={handleClick}
           >
-            {item.type === "folder" ? (
-              <Folder className="w-10 h-10 text-yellow-500" />
-            ) : (
-              <File className="w-10 h-10 text-blue-500" />
+            <div
+              ref={(node) => {
+                if (node) {
+                  drag(node as unknown as HTMLElement);
+                }
+              }}
+              className="p-2 flex items-center justify-center rounded-lg shadow-md border bg-neutral-800/30 backdrop-blur-xl border-neutral-800/60"
+            >
+              {item.type === "folder" ? (
+                <Folder className="size-10 text-yellow-500" />
+              ) : (
+                <File className="size-10 text-blue-500" />
+              )}
+            </div>
+            <span className="mt-2 text-sm text-center">{item.name}</span>
+            {isActive && item.type === "folder" && (
+              <div className="absolute inset-0 flex items-center justify-center bg-opacity-50 text-sm">
+                {item.path}
+              </div>
             )}
           </div>
-          <span className="mt-2 text-sm text-center">{item.name}</span>
-          {isActive && item.type === "folder" && (
-            <div className="absolute inset-0 flex items-center justify-center bg-opacity-50 text-sm">
-              {item.path}
-            </div>
+        </ContextMenuTrigger>
+        <ContextMenuContent className="">
+          {item.type === "file" ? (
+            <ContextMenuItem
+              onSelect={() =>
+                setModalState({
+                  open: true,
+                  type: "edit",
+                  itemType: "file",
+                  parentId: item.parentId,
+                  item,
+                })
+              }
+            >
+              <Edit className="mr-2 size-4" />
+              <span>Edit Bookmark</span>
+            </ContextMenuItem>
+          ) : (
+            <ContextMenuItem
+              onSelect={() =>
+                setModalState({
+                  open: true,
+                  type: "rename",
+                  itemType: "folder",
+                  parentId: item.parentId,
+                  item,
+                })
+              }
+            >
+              <Edit className="mr-2 size-4" />
+              <span>Rename Folder</span>
+            </ContextMenuItem>
           )}
-        </div>
-      </ContextMenuTrigger>
-      <ContextMenuContent className="">
-        {item.type === "file" ? (
-          <ContextMenuItem
-            onSelect={() =>
-              setModalState({
-                open: true,
-                type: "edit",
-                itemType: "file",
-                parentId: item.parentId,
-                item,
-              })
-            }
-          >
-            <Edit className="mr-2 h-4 w-4" />
-            <span>Edit Bookmark</span>
+          {/* <ContextMenuItem onSelect={handleCopy}>
+            <Copy className="mr-2 h-4 w-4" />
+            <span>Copy</span>
           </ContextMenuItem>
-        ) : (
-          <ContextMenuItem
-            onSelect={() =>
-              setModalState({
-                open: true,
-                type: "rename",
-                itemType: "folder",
-                parentId: item.parentId,
-                item,
-              })
-            }
-          >
-            <Edit className="mr-2 h-4 w-4" />
-            <span>Rename Folder</span>
+          <ContextMenuItem onSelect={handlePaste}>
+            <Clipboard className="mr-2 h-4 w-4" />
+            <span>Paste</span>
+          </ContextMenuItem> */}
+          <ContextMenuItem onSelect={() => deleteItem(item.id)}>
+            <Trash2 className="mr-2 size-4" />
+            <span>Delete {item.type === "folder" ? "Folder" : "Bookmark"}</span>
           </ContextMenuItem>
-        )}
-        <ContextMenuItem onSelect={() => deleteItem(item.id)}>
-          <Trash2 className="mr-2 h-4 w-4" />
-          <span>Delete {item.type === "folder" ? "Folder" : "Bookmark"}</span>
-        </ContextMenuItem>
-      </ContextMenuContent>
-    </ContextMenu>
-  );
-};
+        </ContextMenuContent>
+      </ContextMenu>
+    );
+  }
+);
+
+DesktopItem.displayName = "DesktopItem";

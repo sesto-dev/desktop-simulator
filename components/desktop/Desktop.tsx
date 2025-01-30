@@ -70,6 +70,13 @@ const DesktopWrapper: React.FC = () => {
 
   const moveItem = useCallback(
     (draggedId: string, targetId: string | null, sourcePath: string) => {
+      if (draggedId === targetId) {
+        toast(
+          "Cannot move item to the same location. Please select a different location."
+        );
+        return; // Prevent dragging onto itself
+      }
+
       setItems((prevItems) => {
         const findItemAndRemove = (
           items: Item[],
@@ -355,7 +362,7 @@ const DesktopWrapper: React.FC = () => {
               })
             }
           >
-            <Folder className="mr-2 h-4 w-4" />
+            <Folder className="mr-2 size-4" />
             <span>New Folder</span>
           </ContextMenuItem>
           <ContextMenuItem
@@ -369,7 +376,7 @@ const DesktopWrapper: React.FC = () => {
               })
             }
           >
-            <File className="mr-2 h-4 w-4" />
+            <File className="mr-2 size-4" />
             <span>New Bookmark</span>
           </ContextMenuItem>
         </ContextMenuContent>

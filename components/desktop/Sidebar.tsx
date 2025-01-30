@@ -19,46 +19,12 @@ import {
 import Tree from "@/components/desktop/Tree";
 import type { Item } from "@/types/desktop";
 
-// This is sample data.
-const data = {
-  changes: [
-    {
-      file: "README.md",
-      state: "M",
-    },
-    {
-      file: "api/hello/route.ts",
-      state: "U",
-    },
-    {
-      file: "app/layout.tsx",
-      state: "M",
-    },
-  ],
-};
-
 export default function AppSidebar({
   items,
 }: React.ComponentProps<typeof Sidebar> & { items: Item[] }) {
   return (
     <Sidebar className="bg-neutral-800/10 backdrop-blur-xl">
       <SidebarContent className="bg-neutral-800/10 backdrop-blur-xl">
-        <SidebarGroup className="bg-neutral-800/10 backdrop-blur-xl">
-          <SidebarGroupLabel>Changes</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {data.changes.map((item, index) => (
-                <SidebarMenuItem key={index}>
-                  <SidebarMenuButton>
-                    <File />
-                    {item.file}
-                  </SidebarMenuButton>
-                  <SidebarMenuBadge>{item.state}</SidebarMenuBadge>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
         <SidebarGroup>
           <SidebarGroupLabel>Files</SidebarGroupLabel>
           <SidebarGroupContent>

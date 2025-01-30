@@ -425,7 +425,7 @@ const Desktop: React.FC = () => {
             />
           </div>
         </ContextMenuTrigger>
-        <ContextMenuContent className="w-64">
+        <ContextMenuContent className="">
           <ContextMenuItem
             onSelect={() =>
               setModalState({

@@ -60,7 +60,7 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
 
   return (
     <div
-      className="absolute backdrop-blur-xl bg-neutral-800/30 rounded-lg shadow-lg overflow-hidden"
+      className="absolute backdrop-blur-xl bg-neutral-800/10 rounded-lg shadow-lg overflow-hidden"
       style={{
         left: windowItem.position.x,
         top: windowItem.position.y,
@@ -70,7 +70,7 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
       }}
     >
       <div
-        className="p-2 px-4 flex bg-neutral-700/30 justify-between items-center cursor-move"
+        className="p-2 px-4 flex bg-neutral-700/10 justify-between items-center cursor-move"
         onMouseDown={handleMouseDown}
       >
         <h3 className="text-sm">{windowItem.item.name}</h3>

@@ -50,6 +50,7 @@ export const ItemModal: React.FC<ItemModalProps> = ({
     <div
       className="fixed inset-0 bg-opacity-50 flex items-center justify-center"
       onKeyDown={handleKeyDown}
+      style={{ zIndex: 1001 }}
     >
       <div className="bg-neutral-800/30 backdrop-blur-sm p-4 rounded-lg w-96">
         <form onSubmit={handleSubmit}>

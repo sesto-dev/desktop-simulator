@@ -11,6 +11,7 @@ export interface Item {
 export interface WindowItem {
   id: string;
   itemId: string;
+  item: Item;
   position: { x: number; y: number };
   size: { width: number; height: number };
   isMinimized: boolean;

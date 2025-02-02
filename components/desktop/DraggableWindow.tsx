@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useCallback, useEffect } from "react";
 import { Minimize, X } from "lucide-react";
-import type { WindowItem, Item } from "@/types/desktop";
+import type { WindowItem } from "@/types/desktop";
 
 interface DraggableWindowProps {
-  windowItem: WindowItem & { item: Item };
+  windowItem: WindowItem;
   closeWindow: (id: string) => void;
   minimizeWindow: (id: string) => void;
   moveWindow: (id: string, position: { x: number; y: number }) => void;
@@ -75,6 +74,12 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
       >
         <h3 className="text-sm">{windowItem.item.name}</h3>
         <div className="flex space-x-2">
+          <button
+            onClick={() => minimizeWindow(windowItem.id)}
+            className="focus:outline-none"
+          >
+            <Minimize className="size-4" />
+          </button>
           <button
             onClick={() => closeWindow(windowItem.id)}
             className="focus:outline-none"

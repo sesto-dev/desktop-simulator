@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import type { ModalState } from "@/types/desktop";
+import { toast } from "sonner";
 
 interface ItemModalProps {
   modalState: ModalState;
@@ -29,6 +30,10 @@ export const ItemModal: React.FC<ItemModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (modalState.itemType === "file" && !/^https?:\/\//.test(link)) {
+      toast.error("Please enter a valid URL.");
+      return;
+    }
     handleItemOperation(name, link);
   };
 

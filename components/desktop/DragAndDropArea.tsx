@@ -1,9 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
-import { DropTargetMonitor } from "react-dnd";
 import { useDrop } from "react-dnd";
-import type { DropResult, Item, ModalState } from "@/types/desktop";
 import { DesktopItem } from "@/components/desktop/DesktopItem";
+import type { Item, ModalState } from "@/types/desktop";
 
 interface DragDropAreaProps {
   items: Item[];
@@ -32,21 +29,9 @@ export const DragDropArea: React.FC<DragDropAreaProps> = ({
   deleteItem,
   parentPath,
 }) => {
-  const [{ isOver, canDrop }, drop] = useDrop<
-    Item,
-    DropResult,
-    { isOver: boolean; canDrop: boolean }
-  >({
+  const [{ isOver, canDrop }, drop] = useDrop({
     accept: "ITEM",
-    drop: (
-      droppedItem: Item,
-      monitor: DropTargetMonitor
-    ): DropResult | undefined => {
-      if (!monitor.didDrop()) {
-        return { id: parentId ?? "desktop" };
-      }
-      return undefined;
-    },
+    drop: () => ({ id: parentId ?? "desktop" }),
     collect: (monitor) => ({
       isOver: monitor.isOver({ shallow: true }),
       canDrop: monitor.canDrop(),
@@ -67,7 +52,7 @@ export const DragDropArea: React.FC<DragDropAreaProps> = ({
       )}
       <div
         className={`grid ${
-          parentPath == "/desktop" ? "grid-cols-12" : "grid-cols-3"
+          parentPath === "/desktop" ? "grid-cols-12" : "grid-cols-3"
         } gap-4 p-4`}
       >
         {items.map((item) => (

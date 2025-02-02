@@ -1,21 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
-import React, { useState, useCallback, useRef, useEffect, memo } from "react";
+import React, { useRef, useEffect } from "react";
 import { Edit, Folder, File, Trash2 } from "lucide-react";
-import type { DropResult, Item, ModalState } from "@/types/desktop";
+import { useDrag, useDrop } from "react-dnd";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import {
-  DndProvider,
-  useDrag,
-  useDrop,
-  DragSourceMonitor,
-  DropTargetMonitor,
-} from "react-dnd";
+import type { Item, ModalState } from "@/types/desktop";
 
 interface DesktopItemProps {
   item: Item;
@@ -31,7 +23,7 @@ interface DesktopItemProps {
   deleteItem: (itemId: string) => void;
 }
 
-export const DesktopItem: React.FC<DesktopItemProps> = memo(
+export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
   ({
     item,
     moveItem,
@@ -41,45 +33,46 @@ export const DesktopItem: React.FC<DesktopItemProps> = memo(
     onDragEnd,
     deleteItem,
   }) => {
-    const [{ isDragging }, drag] = useDrag<
-      Item,
-      DropResult,
-      { isDragging: boolean }
-    >({
+    const ref = useRef<HTMLDivElement>(null);
+
+    const [{ isDragging }, drag] = useDrag({
       type: "ITEM",
       item: () => {
         onDragStart(item);
         return item;
       },
-      collect: (monitor: DragSourceMonitor) => ({
+      collect: (monitor) => ({
         isDragging: !!monitor.isDragging(),
       }),
-      end: (droppedItem: Item, monitor: DragSourceMonitor) => {
-        const dropResult = monitor.getDropResult<DropResult>();
-        if (dropResult && dropResult.id) {
+      end: (_, monitor) => {
+        const dropResult = monitor.getDropResult<{ id: string }>();
+        if (dropResult) {
           moveItem(
-            droppedItem.id,
+            item.id,
             dropResult.id === "desktop" ? null : dropResult.id,
-            droppedItem.path
+            item.path
           );
         }
         onDragEnd();
       },
     });
 
-    const [{ isOver, canDrop }, drop] = useDrop<
-      Item,
-      DropResult,
-      { isOver: boolean; canDrop: boolean }
-    >({
+    const [{ isOver, canDrop }, drop] = useDrop({
       accept: "ITEM",
-      canDrop: (draggedItem: Item) => item.type === "folder",
+      canDrop: (draggedItem: Item) =>
+        item.type === "folder" && draggedItem.id !== item.id,
       drop: () => ({ id: item.id }),
-      collect: (monitor: DropTargetMonitor) => ({
+      collect: (monitor) => ({
         isOver: monitor.isOver({ shallow: true }),
         canDrop: monitor.canDrop(),
       }),
     });
+
+    useEffect(() => {
+      if (item.type === "folder" && ref.current) {
+        drop(ref.current);
+      }
+    }, [drop, item.type]);
 
     const handleClick = () => {
       if (item.type === "file" && item.link) {
@@ -89,15 +82,6 @@ export const DesktopItem: React.FC<DesktopItemProps> = memo(
       }
     };
 
-    const isActive = isOver && canDrop;
-    const ref = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-      if (item.type === "folder" && ref.current) {
-        drop(ref.current);
-      }
-    }, [drop, item.type]);
-
     return (
       <ContextMenu>
         <ContextMenuTrigger>
@@ -105,7 +89,7 @@ export const DesktopItem: React.FC<DesktopItemProps> = memo(
             ref={ref}
             className={`flex flex-col items-center cursor-pointer relative ${
               isDragging ? "opacity-50" : ""
-            } ${isActive ? "bg-blue-200" : ""}`}
+            } ${isOver && canDrop ? "bg-blue-200/20" : ""}`}
             onClick={handleClick}
           >
             <div
@@ -123,14 +107,9 @@ export const DesktopItem: React.FC<DesktopItemProps> = memo(
               )}
             </div>
             <span className="mt-2 text-sm text-center">{item.name}</span>
-            {isActive && item.type === "folder" && (
-              <div className="absolute inset-0 flex items-center justify-center bg-opacity-50 text-sm">
-                {item.path}
-              </div>
-            )}
           </div>
         </ContextMenuTrigger>
-        <ContextMenuContent className="">
+        <ContextMenuContent>
           {item.type === "file" ? (
             <ContextMenuItem
               onSelect={() =>
@@ -162,14 +141,6 @@ export const DesktopItem: React.FC<DesktopItemProps> = memo(
               <span>Rename Folder</span>
             </ContextMenuItem>
           )}
-          {/* <ContextMenuItem onSelect={handleCopy}>
-            <Copy className="mr-2 h-4 w-4" />
-            <span>Copy</span>
-          </ContextMenuItem>
-          <ContextMenuItem onSelect={handlePaste}>
-            <Clipboard className="mr-2 h-4 w-4" />
-            <span>Paste</span>
-          </ContextMenuItem> */}
           <ContextMenuItem onSelect={() => deleteItem(item.id)}>
             <Trash2 className="mr-2 size-4" />
             <span>Delete {item.type === "folder" ? "Folder" : "Bookmark"}</span>

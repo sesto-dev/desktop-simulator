@@ -1,46 +1,75 @@
 import type { Item } from "@/types/desktop";
 
-export const initialItems: Item[] = [
-  {
-    id: "1",
-    name: "Documents",
-    type: "folder",
-    content: [
-      {
-        id: "4",
-        name: "Resume",
-        type: "file",
-        link: "https://example.com/resume",
-        parentId: "1",
-        path: "/desktop/Documents/Resume",
-      },
-    ],
-    parentId: null,
-    path: "/desktop/Documents",
-  },
-  {
-    id: "2",
-    name: "Images",
-    type: "folder",
-    content: [
-      {
-        id: "5",
-        name: "Photo",
-        type: "file",
-        link: "https://example.com/photo",
-        parentId: "2",
-        path: "/desktop/Images/Photo",
-      },
-    ],
-    parentId: null,
-    path: "/desktop/Images",
-  },
-  {
-    id: "3",
-    name: "Notes",
-    type: "file",
-    link: "https://example.com/notes",
-    parentId: null,
-    path: "/desktop/Notes",
-  },
-];
+// Helper function to generate a random ID
+const generateId = (): string => {
+  return Math.random().toString(36).substr(2, 9);
+};
+
+// Helper function to generate a random name
+const generateName = (type: "folder" | "file"): string => {
+  const prefixes = {
+    folder: ["Folder", "Directory", "Project", "Archive"],
+    file: ["Document", "Image", "Note", "Report"],
+  };
+  const prefix =
+    prefixes[type][Math.floor(Math.random() * prefixes[type].length)];
+  return `${prefix}_${Math.floor(Math.random() * 1000)}`;
+};
+
+// Helper function to generate a random link (for files)
+const generateLink = (): string => {
+  return `https://example.com/${Math.random().toString(36).substr(2, 9)}`;
+};
+
+// Recursive function to generate a random file system structure
+const generateFileSystem = (
+  depth: number,
+  maxDepth: number,
+  maxItemsPerFolder: number,
+  parentId: string | null = null,
+  parentPath: string = "/desktop"
+): Item[] => {
+  if (depth > maxDepth) return [];
+
+  const items: Item[] = [];
+  const numItems = Math.floor(Math.random() * maxItemsPerFolder) + 1;
+
+  for (let i = 0; i < numItems; i++) {
+    const isFolder = Math.random() > 0.5; // 50% chance to be a folder
+    const id = generateId();
+    const name = generateName(isFolder ? "folder" : "file");
+    const path = `${parentPath}/${name}`;
+
+    const item: Item = {
+      id,
+      name,
+      type: isFolder ? "folder" : "file",
+      parentId,
+      path,
+    };
+
+    if (isFolder) {
+      item.content = generateFileSystem(
+        depth + 1,
+        maxDepth,
+        maxItemsPerFolder,
+        id,
+        path
+      );
+    } else {
+      item.link = generateLink();
+    }
+
+    items.push(item);
+  }
+
+  return items;
+};
+
+// Function to generate the initial file system with random data
+export const generateInitialItems = (): Item[] => {
+  return generateFileSystem(2, 6, 5); // Adjust depth and maxItemsPerFolder as needed
+};
+
+// Example usage
+export const initialItems: Item[] = generateInitialItems();

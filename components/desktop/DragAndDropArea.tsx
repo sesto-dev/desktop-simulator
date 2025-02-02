@@ -60,14 +60,10 @@ export const DragDropArea: React.FC<DragDropAreaProps> = ({
           drop(node as unknown as HTMLElement);
         }
       }}
-      className={`relative min-h-full w-full ${
-        isOver && canDrop ? "bg-blue-200" : ""
-      }`}
+      className="relative min-h-full w-full"
     >
       {isOver && canDrop && (
-        <div className="absolute inset-0 bg-blue-200 bg-opacity-50 flex items-center justify-center">
-          <span className="text-lg font-bold">Drop here</span>
-        </div>
+        <div className="absolute inset-0 rounded-xl animate-pulse bg-blue-200/10 flex items-center justify-center" />
       )}
       <div
         className={`grid ${

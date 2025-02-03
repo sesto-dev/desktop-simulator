@@ -19,7 +19,7 @@ export interface WindowItem {
 
 export interface ModalState {
   open: boolean;
-  type: "new" | "edit" | "rename" | null;
+  type: "new" | "edit" | "rename" | "copy" | "cut" | null;
   itemType: "file" | "folder" | null;
   parentId: string | null;
   item: Item | null;
@@ -27,4 +27,9 @@ export interface ModalState {
 
 export interface DropResult {
   id: string;
+}
+
+export interface ClipboardItem {
+  item: Item;
+  operation: "copy" | "cut";
 }

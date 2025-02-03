@@ -31,13 +31,18 @@ const DesktopWrapper: React.FC = () => {
     deleteItem,
     handleDragStart,
     handleDragEnd,
+    handleEmptySpaceRightClick,
+    handlePaste,
   } = useDesktop(initialItems);
 
   return (
     <DndProvider backend={HTML5Backend}>
       <div ref={desktopRef} className="flex h-screen w-screen">
         <AppSidebar items={items} />
-        <div className="relative p-2 flex h-full w-full items-center justify-center overflow-hidden bg-background md:shadow-xl">
+        <div
+          className="relative p-2 w-full h-full bg-background md:shadow-xl"
+          onContextMenu={handleEmptySpaceRightClick}
+        >
           <DotPattern
             className={cn(
               "[mask-image:radial-gradient(300px_circle_at_center,white,transparent)]"
@@ -52,6 +57,8 @@ const DesktopWrapper: React.FC = () => {
             onDragEnd={handleDragEnd}
             deleteItem={deleteItem}
             parentPath="/desktop"
+            handleEmptySpaceRightClick={handleEmptySpaceRightClick}
+            handlePaste={handlePaste}
           />
           {windows.map((windowItem) => (
             <DraggableWindow
@@ -71,6 +78,8 @@ const DesktopWrapper: React.FC = () => {
                 onDragEnd={handleDragEnd}
                 deleteItem={deleteItem}
                 parentPath={windowItem.item.path}
+                handleEmptySpaceRightClick={handleEmptySpaceRightClick}
+                handlePaste={handlePaste}
               />
             </DraggableWindow>
           ))}

@@ -25,6 +25,7 @@ const generateLink = (): string => {
 const generateFileSystem = (
   depth: number,
   maxDepth: number,
+  minItemsPerFolder: number,
   maxItemsPerFolder: number,
   parentId: string | null = null,
   parentPath: string = "/desktop"
@@ -32,7 +33,8 @@ const generateFileSystem = (
   if (depth > maxDepth) return [];
 
   const items: Item[] = [];
-  const numItems = Math.floor(Math.random() * maxItemsPerFolder) + 1;
+  const numItems =
+    Math.floor(Math.random() * maxItemsPerFolder) + minItemsPerFolder;
 
   for (let i = 0; i < numItems; i++) {
     const isFolder = Math.random() > 0.5; // 50% chance to be a folder
@@ -52,6 +54,7 @@ const generateFileSystem = (
       item.content = generateFileSystem(
         depth + 1,
         maxDepth,
+        minItemsPerFolder,
         maxItemsPerFolder,
         id,
         path
@@ -68,7 +71,7 @@ const generateFileSystem = (
 
 // Function to generate the initial file system with random data
 export const generateInitialItems = (): Item[] => {
-  return generateFileSystem(2, 6, 5); // Adjust depth and maxItemsPerFolder as needed
+  return generateFileSystem(2, 6, 4, 8); // Adjust depth and maxItemsPerFolder as needed
 };
 
 // Example usage

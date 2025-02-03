@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from "react";
-import { Edit, Folder, File, Trash2 } from "lucide-react";
+import { Edit, Folder, File, Trash2, Copy, Scissors } from "lucide-react";
 import { useDrag, useDrop } from "react-dnd";
 import {
   ContextMenu,
@@ -21,6 +21,8 @@ interface DesktopItemProps {
   onDragStart: (item: Item) => void;
   onDragEnd: () => void;
   deleteItem: (itemId: string) => void;
+  handleCopy: (item: Item) => void;
+  handleCut: (item: Item) => void;
 }
 
 export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
@@ -32,6 +34,8 @@ export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
     onDragStart,
     onDragEnd,
     deleteItem,
+    handleCopy,
+    handleCut,
   }) => {
     const ref = useRef<HTMLDivElement>(null);
 
@@ -110,6 +114,14 @@ export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent>
+          <ContextMenuItem onSelect={() => handleCopy(item)}>
+            <Copy className="mr-2 size-4" />
+            <span>Copy</span>
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => handleCut(item)}>
+            <Scissors className="mr-2 size-4" />
+            <span>Cut</span>
+          </ContextMenuItem>
           <ContextMenuItem
             onSelect={() =>
               setModalState({

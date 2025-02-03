@@ -1,6 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { toast } from "sonner";
-import type { Item, WindowItem, ModalState } from "@/types/desktop";
+import type {
+  Item,
+  WindowItem,
+  ModalState,
+  ClipboardItem,
+} from "@/types/desktop";
 
 export const useDesktop = (initialItems: Item[]) => {
   const [items, setItems] = useState<Item[]>(initialItems);
@@ -12,6 +17,7 @@ export const useDesktop = (initialItems: Item[]) => {
     parentId: null,
     item: null,
   });
+  const [clipboard, setClipboard] = useState<ClipboardItem | null>(null);
   const [draggedItem, setDraggedItem] = useState<Item | null>(null);
   const desktopRef = useRef<HTMLDivElement>(null);
 
@@ -294,6 +300,54 @@ export const useDesktop = (initialItems: Item[]) => {
     toast.success("Item deleted successfully.");
   }, []);
 
+  const handleCopy = useCallback((item: Item) => {
+    setClipboard({
+      item,
+      operation: "copy",
+    });
+    toast.success(`Copied ${item.name}`);
+  }, []);
+
+  const handleCut = useCallback((item: Item) => {
+    setClipboard({
+      item,
+      operation: "cut",
+    });
+    toast.success(`Cut ${item.name}`);
+  }, []);
+
+  const handlePaste = useCallback(() => {
+    if (!clipboard) {
+      toast.error("Clipboard is empty");
+      return;
+    }
+
+    setItems((prevItems) => {
+      const newItem = {
+        ...clipboard.item,
+        id: Date.now().toString(),
+        parentId: modalState.parentId,
+      };
+
+      if (clipboard.operation === "cut") {
+        // Remove the original item
+        const updatedItems = prevItems.filter(
+          (item) => item.id !== clipboard.item.id
+        );
+        return [...updatedItems, newItem];
+      } else {
+        return [...prevItems, newItem];
+      }
+    });
+
+    setClipboard(null);
+    toast.success(`Pasted ${clipboard.item.name}`);
+  }, [clipboard, modalState.parentId]);
+
+  const handleEmptySpaceRightClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+  }, []);
+
   return {
     items,
     windows,
@@ -310,5 +364,9 @@ export const useDesktop = (initialItems: Item[]) => {
     deleteItem,
     handleDragStart,
     handleDragEnd,
+    handleCopy,
+    handleCut,
+    handlePaste,
+    handleEmptySpaceRightClick,
   };
 };

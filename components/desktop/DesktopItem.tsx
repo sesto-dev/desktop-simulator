@@ -3,9 +3,9 @@ import { Edit, Folder, File, Trash2 } from "lucide-react";
 import { useDrag, useDrop } from "react-dnd";
 import {
   ContextMenu,
+  ContextMenuTrigger,
   ContextMenuContent,
   ContextMenuItem,
-  ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import type { Item, ModalState } from "@/types/desktop";
 
@@ -110,37 +110,22 @@ export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent>
-          {item.type === "file" ? (
-            <ContextMenuItem
-              onSelect={() =>
-                setModalState({
-                  open: true,
-                  type: "edit",
-                  itemType: "file",
-                  parentId: item.parentId,
-                  item,
-                })
-              }
-            >
-              <Edit className="mr-2 size-4" />
-              <span>Edit Bookmark</span>
-            </ContextMenuItem>
-          ) : (
-            <ContextMenuItem
-              onSelect={() =>
-                setModalState({
-                  open: true,
-                  type: "rename",
-                  itemType: "folder",
-                  parentId: item.parentId,
-                  item,
-                })
-              }
-            >
-              <Edit className="mr-2 size-4" />
-              <span>Rename Folder</span>
-            </ContextMenuItem>
-          )}
+          <ContextMenuItem
+            onSelect={() =>
+              setModalState({
+                open: true,
+                type: item.type === "file" ? "edit" : "rename",
+                itemType: item.type,
+                parentId: item.parentId,
+                item,
+              })
+            }
+          >
+            <Edit className="mr-2 size-4" />
+            <span>
+              {item.type === "file" ? "Edit Bookmark" : "Rename Folder"}
+            </span>
+          </ContextMenuItem>
           <ContextMenuItem onSelect={() => deleteItem(item.id)}>
             <Trash2 className="mr-2 size-4" />
             <span>Delete {item.type === "folder" ? "Folder" : "Bookmark"}</span>

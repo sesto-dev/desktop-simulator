@@ -1,3 +1,4 @@
+// components/desktop/DesktopItem.tsx
 import React, { useRef, useEffect } from "react";
 import { Edit, Folder, File, Trash2, Copy, Scissors } from "lucide-react";
 import { useDrag, useDrop } from "react-dnd";
@@ -113,17 +114,17 @@ export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
             <span className="mt-2 text-sm text-center">{item.name}</span>
           </div>
         </ContextMenuTrigger>
-        <ContextMenuContent>
-          <ContextMenuItem onSelect={() => handleCopy(item)}>
+        <ContextMenuContent className="z-[9999]">
+          <ContextMenuItem onClick={() => handleCopy(item)}>
             <Copy className="mr-2 size-4" />
             <span>Copy</span>
           </ContextMenuItem>
-          <ContextMenuItem onSelect={() => handleCut(item)}>
+          <ContextMenuItem onClick={() => handleCut(item)}>
             <Scissors className="mr-2 size-4" />
             <span>Cut</span>
           </ContextMenuItem>
           <ContextMenuItem
-            onSelect={() =>
+            onClick={() =>
               setModalState({
                 open: true,
                 type: item.type === "file" ? "edit" : "rename",
@@ -138,7 +139,7 @@ export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
               {item.type === "file" ? "Edit Bookmark" : "Rename Folder"}
             </span>
           </ContextMenuItem>
-          <ContextMenuItem onSelect={() => deleteItem(item.id)}>
+          <ContextMenuItem onClick={() => deleteItem(item.id)}>
             <Trash2 className="mr-2 size-4" />
             <span>Delete {item.type === "folder" ? "Folder" : "Bookmark"}</span>
           </ContextMenuItem>

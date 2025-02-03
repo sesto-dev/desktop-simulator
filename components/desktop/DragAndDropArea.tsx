@@ -1,14 +1,7 @@
+// components/desktop/DragAndDropArea.tsx
 import { useDrop } from "react-dnd";
 import { DesktopItem } from "@/components/desktop/DesktopItem";
 import type { Item, ModalState } from "@/types/desktop";
-import {
-  ContextMenu,
-  ContextMenuTrigger,
-  ContextMenuContent,
-  ContextMenuItem,
-} from "@/components/ui/context-menu";
-import { useState } from "react";
-import { File, Folder } from "lucide-react";
 
 interface DragDropAreaProps {
   items: Item[];
@@ -24,8 +17,6 @@ interface DragDropAreaProps {
   onDragEnd: () => void;
   deleteItem: (itemId: string) => void;
   parentPath: string;
-  handleEmptySpaceRightClick: (e: React.MouseEvent) => void;
-  handlePaste: () => void;
 }
 
 export const DragDropArea: React.FC<DragDropAreaProps> = ({
@@ -38,8 +29,6 @@ export const DragDropArea: React.FC<DragDropAreaProps> = ({
   onDragEnd,
   deleteItem,
   parentPath,
-  handleEmptySpaceRightClick,
-  handlePaste,
 }) => {
   const [{ isOver, canDrop }, drop] = useDrop({
     accept: "ITEM",
@@ -50,20 +39,6 @@ export const DragDropArea: React.FC<DragDropAreaProps> = ({
     }),
   });
 
-  const [contextMenuPosition, setContextMenuPosition] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
-
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setContextMenuPosition({ x: e.clientX, y: e.clientY });
-  };
-
-  const closeContextMenu = () => {
-    setContextMenuPosition(null);
-  };
-
   return (
     <div
       ref={(node) => {
@@ -72,7 +47,6 @@ export const DragDropArea: React.FC<DragDropAreaProps> = ({
         }
       }}
       className="relative w-full h-full"
-      onContextMenu={handleContextMenu}
     >
       {isOver && canDrop && (
         <div className="absolute inset-0 rounded-xl animate-pulse bg-blue-200/10 flex items-center justify-center" />
@@ -113,61 +87,6 @@ export const DragDropArea: React.FC<DragDropAreaProps> = ({
           />
         ))}
       </div>
-
-      {contextMenuPosition && (
-        <div
-          className="fixed"
-          style={{
-            left: contextMenuPosition.x,
-            top: contextMenuPosition.y,
-            zIndex: 2000,
-          }}
-        >
-          <ContextMenu>
-            <ContextMenuContent>
-              <ContextMenuItem
-                onClick={() => {
-                  setModalState({
-                    open: true,
-                    type: "new",
-                    itemType: "file",
-                    parentId: parentId,
-                    item: null,
-                  });
-                  closeContextMenu();
-                }}
-              >
-                <File className="mr-2 size-4" />
-                New File
-              </ContextMenuItem>
-              <ContextMenuItem
-                onClick={() => {
-                  setModalState({
-                    open: true,
-                    type: "new",
-                    itemType: "folder",
-                    parentId: parentId,
-                    item: null,
-                  });
-                  closeContextMenu();
-                }}
-              >
-                <Folder className="mr-2 size-4" />
-                New Folder
-              </ContextMenuItem>
-              <ContextMenuItem
-                onClick={() => {
-                  handlePaste();
-                  closeContextMenu();
-                }}
-              >
-                <File className="mr-2 size-4" />
-                Paste
-              </ContextMenuItem>
-            </ContextMenuContent>
-          </ContextMenu>
-        </div>
-      )}
     </div>
   );
 };

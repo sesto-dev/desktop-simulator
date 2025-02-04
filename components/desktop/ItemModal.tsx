@@ -43,7 +43,7 @@ export const ItemModal: React.FC<ItemModalProps> = ({
         open: false,
         type: null,
         itemType: null,
-        parentId: null,
+        locationId: null,
         item: null,
       });
     }
@@ -76,7 +76,7 @@ export const ItemModal: React.FC<ItemModalProps> = ({
                   open: false,
                   type: null,
                   itemType: null,
-                  parentId: null,
+                  locationId: null,
                   item: null,
                 })
               }

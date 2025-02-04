@@ -74,12 +74,12 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
       >
         <h3 className="text-sm">{windowItem.item.name}</h3>
         <div className="flex space-x-2">
-          <button
+          {/* <button
             onClick={() => minimizeWindow(windowItem.id)}
             className="focus:outline-none"
           >
             <Minimize className="size-4" />
-          </button>
+          </button> */}
           <button
             onClick={() => closeWindow(windowItem.id)}
             className="focus:outline-none"

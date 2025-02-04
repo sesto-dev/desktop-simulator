@@ -16,6 +16,7 @@ import { useDesktop } from "@/hooks/useDesktop";
 const DesktopWrapper: React.FC = () => {
   const {
     items,
+    clipboard,
     windows,
     modalState,
     desktopRef,
@@ -27,26 +28,28 @@ const DesktopWrapper: React.FC = () => {
     setModalState,
     handleItemOperation,
     deleteItem,
+    handleCopy,
     handleCut,
+    handlePaste,
     clearClipboard,
   } = useDesktop();
 
-  const handleCreateFile = (parentId?: string | null) => {
+  const handleCreateFile = (locationId?: string | null) => {
     setModalState({
       open: true,
       type: "new",
       itemType: "file",
-      parentId: parentId || null,
+      locationId: locationId || null,
       item: null,
     });
   };
 
-  const handleCreateFolder = (parentId?: string | null) => {
+  const handleCreateFolder = (locationId?: string | null) => {
     setModalState({
       open: true,
       type: "new",
       itemType: "folder",
-      parentId: parentId || null,
+      locationId: locationId || null,
       item: null,
     });
   };
@@ -58,6 +61,8 @@ const DesktopWrapper: React.FC = () => {
         <EmptySpaceContextMenu
           onCreateFile={handleCreateFile}
           onCreateFolder={handleCreateFolder}
+          handlePaste={handlePaste}
+          clipboard={clipboard}
         >
           <div className="relative p-2 w-full h-full bg-background md:shadow-xl">
             <DotPattern
@@ -67,7 +72,7 @@ const DesktopWrapper: React.FC = () => {
             />
 
             <DragDropArea
-              items={items.filter((item) => item.parentId === null)}
+              items={items.filter((item) => item.locationId === null)}
               moveItem={moveItem}
               openWindow={openWindow}
               setModalState={setModalState}
@@ -75,6 +80,8 @@ const DesktopWrapper: React.FC = () => {
               onDragEnd={clearClipboard}
               deleteItem={deleteItem}
               parentPath="/desktop"
+              handleCopy={handleCopy}
+              handleCut={handleCut}
             />
 
             {windows.map((windowItem) => (
@@ -86,19 +93,23 @@ const DesktopWrapper: React.FC = () => {
                 moveWindow={moveWindow}
               >
                 <EmptySpaceContextMenu
-                  parentId={windowItem.item.id}
+                  locationId={windowItem.item.id}
                   onCreateFile={handleCreateFile}
                   onCreateFolder={handleCreateFolder}
+                  handlePaste={handlePaste}
+                  clipboard={clipboard}
                 >
                   <DragDropArea
                     items={windowItem.item.content || []}
                     moveItem={moveItem}
                     openWindow={openWindow}
                     setModalState={setModalState}
-                    parentId={windowItem.item.id}
+                    locationId={windowItem.item.id}
                     onDragStart={handleCut}
                     onDragEnd={clearClipboard}
                     deleteItem={deleteItem}
+                    handleCopy={handleCopy}
+                    handleCut={handleCut}
                     parentPath={windowItem.item.path}
                   />
                 </EmptySpaceContextMenu>

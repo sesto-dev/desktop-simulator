@@ -4,7 +4,7 @@ export interface Item {
   type: "file" | "folder";
   content?: Item[];
   link?: string;
-  parentId: string | null;
+  locationId: string | null;
   path: string;
 }
 
@@ -21,7 +21,7 @@ export interface ModalState {
   open: boolean;
   type: "new" | "edit" | "rename" | "copy" | "cut" | null;
   itemType: "file" | "folder" | null;
-  parentId: string | null;
+  locationId: string | null;
   item: Item | null;
 }
 

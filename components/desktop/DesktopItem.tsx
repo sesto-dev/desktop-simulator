@@ -8,7 +8,6 @@ import {
   ContextMenuItem,
 } from "@/components/ui/context-menu";
 import type { Item, ModalState } from "@/types/desktop";
-import { useDesktop } from "@/hooks/useDesktop";
 
 interface DesktopItemProps {
   item: Item;
@@ -18,6 +17,8 @@ interface DesktopItemProps {
   onDragStart: (item: Item) => void;
   onDragEnd: () => void;
   deleteItem: (itemId: string) => void;
+  handleCut: (item: Item) => void;
+  handleCopy: (item: Item) => void;
 }
 
 export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
@@ -29,9 +30,9 @@ export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
     onDragStart,
     onDragEnd,
     deleteItem,
+    handleCopy,
+    handleCut,
   }) => {
-    const { handleCut, handleCopy } = useDesktop();
-
     const ref = useRef<HTMLDivElement>(null);
 
     const [{ isDragging }, drag] = useDrag({
@@ -44,10 +45,9 @@ export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
         isDragging: !!monitor.isDragging(),
       }),
       end: (_, monitor) => {
-        const dropResult = monitor.getDropResult<{ id: string }>();
-        if (dropResult) {
-          moveItem(item, dropResult);
-        }
+        const target = monitor.getDropResult<{ id: string }>();
+        if (target) moveItem(item, target);
+
         onDragEnd();
       },
     });
@@ -117,7 +117,7 @@ export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
                 open: true,
                 type: item.type === "file" ? "edit" : "rename",
                 itemType: item.type,
-                parentId: item.parentId,
+                locationId: item.locationId,
                 item,
               })
             }

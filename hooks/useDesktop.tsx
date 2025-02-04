@@ -15,11 +15,15 @@ export const useDesktop = () => {
     open: false,
     type: null,
     itemType: null,
-    parentId: null,
+    locationId: null,
     item: null,
   });
   const [clipboard, setClipboard] = useState<ClipboardItem | null>(null);
   const desktopRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    console.log({ clipboard: JSON.stringify(clipboard, null, 2) });
+  }, [clipboard]);
 
   // Update windows state whenever items change
   useEffect(() => {
@@ -91,7 +95,7 @@ export const useDesktop = () => {
     (items: Item[], item: Item, targetId: string | null): Item[] => {
       if (targetId === null) {
         const newPath = `/desktop/${item.name}`;
-        return [...items, { ...item, parentId: null, path: newPath }];
+        return [...items, { ...item, locationId: null, path: newPath }];
       }
 
       return items.map((i) => {
@@ -100,8 +104,8 @@ export const useDesktop = () => {
           return {
             ...i,
             content: i.content
-              ? [...i.content, { ...item, parentId: targetId, path: newPath }]
-              : [{ ...item, parentId: targetId, path: newPath }],
+              ? [...i.content, { ...item, locationId: targetId, path: newPath }]
+              : [{ ...item, locationId: targetId, path: newPath }],
           };
         }
         if (i.content) {
@@ -168,17 +172,21 @@ export const useDesktop = () => {
   }, []);
 
   const handlePaste = useCallback(
-    (parentId?: string | null) => {
+    (locationId?: string | null) => {
       if (!clipboard) {
         toast.error("Clipboard is empty");
         return;
       }
 
+      toast(
+        `Pasting - ${clipboard.operation} - ${clipboard.item.name} - locationId: ${locationId}`
+      );
+
       setItems((prevItems) => {
         const newItem = {
           ...clipboard.item,
           id: Date.now().toString(),
-          parentId: parentId || modalState.parentId,
+          locationId: locationId || modalState.locationId,
         };
 
         if (clipboard.operation === "cut") {
@@ -186,29 +194,29 @@ export const useDesktop = () => {
           const updatedItems = prevItems.filter(
             (item) => item.id !== clipboard.item.id
           );
-          return insertItem(updatedItems, newItem, parentId || null);
+          return insertItem(updatedItems, newItem, locationId || null);
         } else {
-          return insertItem(prevItems, newItem, parentId || null);
+          return insertItem(prevItems, newItem, locationId || null);
         }
       });
 
       setClipboard(null);
       toast.success(`Pasted ${clipboard.item.name}`);
     },
-    [clipboard, modalState.parentId, insertItem]
+    [modalState.locationId, insertItem]
   );
 
   const handleItemOperation = useCallback(
     (name: string, link?: string) => {
       if (modalState.type === "new") {
-        const parentPath = modalState.parentId
-          ? getItemPath(items, modalState.parentId)
+        const parentPath = modalState.locationId
+          ? getItemPath(items, modalState.locationId)
           : "/desktop";
         const newItem: Item = {
           id: Date.now().toString(),
           name,
           type: modalState.itemType!,
-          parentId: modalState.parentId,
+          locationId: modalState.locationId,
           path: `${parentPath}/${name}`,
           ...(modalState.itemType === "file" ? { link } : { content: [] }),
         };
@@ -216,7 +224,7 @@ export const useDesktop = () => {
         setItems((prevItems) => {
           const updateItemsRecursively = (items: Item[]): Item[] => {
             return items.map((item) => {
-              if (item.id === modalState.parentId) {
+              if (item.id === modalState.locationId) {
                 return {
                   ...item,
                   content: [...(item.content || []), newItem],
@@ -232,7 +240,7 @@ export const useDesktop = () => {
             });
           };
 
-          if (modalState.parentId === null) {
+          if (modalState.locationId === null) {
             return [...prevItems, newItem];
           } else {
             return updateItemsRecursively(prevItems);
@@ -249,8 +257,8 @@ export const useDesktop = () => {
             return items.map((item) => {
               if (item.id === modalState.item!.id) {
                 const updatedItem = { ...item, name };
-                if (item.parentId) {
-                  const parentPath = getItemPath(prevItems, item.parentId);
+                if (item.locationId) {
+                  const parentPath = getItemPath(prevItems, item.locationId);
                   updatedItem.path = `${parentPath}/${name}`;
                 } else {
                   updatedItem.path = `/desktop/${name}`;
@@ -278,7 +286,7 @@ export const useDesktop = () => {
         open: false,
         type: null,
         itemType: null,
-        parentId: null,
+        locationId: null,
         item: null,
       });
     },

@@ -9,52 +9,41 @@ import {
   ContextMenuItem,
 } from "@/components/ui/context-menu";
 import { toast } from "sonner";
-import { useDesktop } from "@/hooks/useDesktop";
+import type { ClipboardItem } from "@/types/desktop";
 
 interface EmptySpaceContextMenuProps {
-  parentId?: string | null;
-  onCreateFile: (parentId?: string | null) => void;
-  onCreateFolder: (parentId?: string | null) => void;
+  locationId?: string | null;
+  onCreateFile: (locationId?: string | null) => void;
+  onCreateFolder: (locationId?: string | null) => void;
+  clipboard: ClipboardItem | null;
+  handlePaste: (locationId?: string | null) => void;
   children: React.ReactNode;
 }
 
 export const EmptySpaceContextMenu: React.FC<EmptySpaceContextMenuProps> = ({
-  parentId,
+  locationId,
   onCreateFile,
   onCreateFolder,
+  clipboard,
+  handlePaste,
   children,
 }) => {
-  const { clipboard, clearClipboard } = useDesktop();
-
-  const handlePaste = () => {
-    if (!clipboard) {
-      toast.error("Clipboard is empty");
-      return;
-    }
-
-    // Handle the paste operation here
-    // You'll need to implement the actual paste logic
-    // using the clipboard.item and clipboard.operation
-
-    toast.success(`Pasted ${clipboard.item.name}`);
-    if (clipboard.operation === "cut") {
-      clearClipboard();
-    }
-  };
-
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
       <ContextMenuContent className="z-[9999]">
-        <ContextMenuItem onClick={() => onCreateFile(parentId)}>
+        <ContextMenuItem onClick={() => onCreateFile(locationId)}>
           <File className="mr-2 size-4" />
           New File
         </ContextMenuItem>
-        <ContextMenuItem onClick={() => onCreateFolder(parentId)}>
+        <ContextMenuItem onClick={() => onCreateFolder(locationId)}>
           <Folder className="mr-2 size-4" />
           New Folder
         </ContextMenuItem>
-        <ContextMenuItem onClick={handlePaste} disabled={!clipboard}>
+        <ContextMenuItem
+          onClick={() => handlePaste(locationId)}
+          disabled={!clipboard}
+        >
           <File className="mr-2 size-4" />
           Paste
         </ContextMenuItem>

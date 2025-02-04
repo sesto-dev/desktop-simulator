@@ -27,7 +27,7 @@ const generateFileSystem = (
   maxDepth: number,
   minItemsPerFolder: number,
   maxItemsPerFolder: number,
-  parentId: string | null = null,
+  locationId: string | null = null,
   parentPath: string = "/desktop"
 ): Item[] => {
   if (depth > maxDepth) return [];
@@ -46,7 +46,7 @@ const generateFileSystem = (
       id,
       name,
       type: isFolder ? "folder" : "file",
-      parentId,
+      locationId,
       path,
     };
 

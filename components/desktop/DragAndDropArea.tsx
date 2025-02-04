@@ -8,10 +8,12 @@ interface DragDropAreaProps {
   moveItem: (item: Item, target: { id: string }) => void;
   openWindow: (item: Item) => void;
   setModalState: React.Dispatch<React.SetStateAction<ModalState>>;
-  parentId?: string | null;
+  locationId?: string | null;
   onDragStart: (item: Item) => void;
   onDragEnd: () => void;
   deleteItem: (itemId: string) => void;
+  handleCopy: (item: Item) => void;
+  handleCut: (item: Item) => void;
   parentPath: string;
 }
 
@@ -20,15 +22,17 @@ export const DragDropArea: React.FC<DragDropAreaProps> = ({
   moveItem,
   openWindow,
   setModalState,
-  parentId = null,
+  locationId = null,
   onDragStart,
   onDragEnd,
   deleteItem,
+  handleCopy,
+  handleCut,
   parentPath,
 }) => {
   const [{ isOver, canDrop }, drop] = useDrop({
     accept: "ITEM",
-    drop: () => ({ id: parentId ?? "desktop" }),
+    drop: () => ({ id: locationId ?? "desktop" }),
     collect: (monitor) => ({
       isOver: monitor.isOver({ shallow: true }),
       canDrop: monitor.canDrop(),
@@ -62,6 +66,8 @@ export const DragDropArea: React.FC<DragDropAreaProps> = ({
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
             deleteItem={deleteItem}
+            handleCut={handleCut}
+            handleCopy={handleCopy}
           />
         ))}
       </div>

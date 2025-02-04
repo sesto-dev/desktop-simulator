@@ -1,7 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { Edit, Folder, File, Trash2, Copy, Scissors } from "lucide-react";
 import { useDrag, useDrop } from "react-dnd";
-import { useClipboard } from "@/context/ClipboardContext";
 import {
   ContextMenu,
   ContextMenuTrigger,
@@ -9,6 +8,7 @@ import {
   ContextMenuItem,
 } from "@/components/ui/context-menu";
 import type { Item, ModalState } from "@/types/desktop";
+import { useDesktop } from "@/hooks/useDesktop";
 
 interface DesktopItemProps {
   item: Item;
@@ -34,7 +34,8 @@ export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
     onDragEnd,
     deleteItem,
   }) => {
-    const { copyItem, cutItem } = useClipboard();
+    const { handleCut, handleCopy } = useDesktop();
+
     const ref = useRef<HTMLDivElement>(null);
 
     const [{ isDragging }, drag] = useDrag({
@@ -112,11 +113,11 @@ export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent className="z-[9999]">
-          <ContextMenuItem onClick={() => copyItem(item)}>
+          <ContextMenuItem onClick={() => handleCopy(item)}>
             <Copy className="mr-2 size-4" />
             <span>Copy</span>
           </ContextMenuItem>
-          <ContextMenuItem onClick={() => cutItem(item)}>
+          <ContextMenuItem onClick={() => handleCut(item)}>
             <Scissors className="mr-2 size-4" />
             <span>Cut</span>
           </ContextMenuItem>

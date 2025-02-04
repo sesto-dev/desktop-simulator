@@ -6,8 +6,9 @@ import type {
   ModalState,
   ClipboardItem,
 } from "@/types/desktop";
+import { initialItems } from "@/config/desktop";
 
-export const useDesktop = (initialItems: Item[]) => {
+export const useDesktop = () => {
   const [items, setItems] = useState<Item[]>(initialItems);
   const [windows, setWindows] = useState<WindowItem[]>([]);
   const [modalState, setModalState] = useState<ModalState>({
@@ -18,7 +19,6 @@ export const useDesktop = (initialItems: Item[]) => {
     item: null,
   });
   const [clipboard, setClipboard] = useState<ClipboardItem | null>(null);
-  const [draggedItem, setDraggedItem] = useState<Item | null>(null);
   const desktopRef = useRef<HTMLDivElement>(null);
 
   // Update windows state whenever items change
@@ -272,11 +272,14 @@ export const useDesktop = (initialItems: Item[]) => {
   );
 
   const handleDragStart = useCallback((item: Item) => {
-    setDraggedItem(item);
+    setClipboard({
+      item,
+      operation: "cut",
+    });
   }, []);
 
   const handleDragEnd = useCallback(() => {
-    setDraggedItem(null);
+    setClipboard(null);
   }, []);
 
   const deleteItem = useCallback((itemId: string) => {
@@ -313,7 +316,6 @@ export const useDesktop = (initialItems: Item[]) => {
       item,
       operation: "cut",
     });
-    setItems((prevItems) => prevItems.filter((i) => i.id !== item.id));
     toast.success(`Cut ${item.name}`);
   }, []);
 
@@ -348,6 +350,10 @@ export const useDesktop = (initialItems: Item[]) => {
     [clipboard, modalState.parentId]
   );
 
+  const clearClipboard = useCallback(() => {
+    setClipboard(null);
+  }, []);
+
   const handleEmptySpaceRightClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
   }, []);
@@ -355,8 +361,8 @@ export const useDesktop = (initialItems: Item[]) => {
   return {
     items,
     windows,
+    clipboard,
     modalState,
-    draggedItem,
     desktopRef,
     moveItem,
     openWindow,
@@ -371,6 +377,7 @@ export const useDesktop = (initialItems: Item[]) => {
     handleCopy,
     handleCut,
     handlePaste,
+    clearClipboard,
     handleEmptySpaceRightClick,
   };
 };

@@ -2,7 +2,6 @@
 
 import React from "react";
 import { File, Folder } from "lucide-react";
-import { useClipboard } from "@/context/ClipboardContext";
 import {
   ContextMenu,
   ContextMenuTrigger,
@@ -10,6 +9,7 @@ import {
   ContextMenuItem,
 } from "@/components/ui/context-menu";
 import { toast } from "sonner";
+import { useDesktop } from "@/hooks/useDesktop";
 
 interface EmptySpaceContextMenuProps {
   parentId?: string | null;
@@ -24,7 +24,7 @@ export const EmptySpaceContextMenu: React.FC<EmptySpaceContextMenuProps> = ({
   onCreateFolder,
   children,
 }) => {
-  const { clipboard, clearClipboard } = useClipboard();
+  const { clipboard, clearClipboard } = useDesktop();
 
   const handlePaste = () => {
     if (!clipboard) {

@@ -1,7 +1,7 @@
-// components/desktop/DesktopItem.tsx
 import React, { useRef, useEffect } from "react";
 import { Edit, Folder, File, Trash2, Copy, Scissors } from "lucide-react";
 import { useDrag, useDrop } from "react-dnd";
+import { useClipboard } from "@/context/ClipboardContext";
 import {
   ContextMenu,
   ContextMenuTrigger,
@@ -22,8 +22,6 @@ interface DesktopItemProps {
   onDragStart: (item: Item) => void;
   onDragEnd: () => void;
   deleteItem: (itemId: string) => void;
-  handleCopy: (item: Item) => void;
-  handleCut: (item: Item) => void;
 }
 
 export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
@@ -35,9 +33,8 @@ export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
     onDragStart,
     onDragEnd,
     deleteItem,
-    handleCopy,
-    handleCut,
   }) => {
+    const { copyItem, cutItem } = useClipboard();
     const ref = useRef<HTMLDivElement>(null);
 
     const [{ isDragging }, drag] = useDrag({
@@ -89,7 +86,7 @@ export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
 
     return (
       <ContextMenu>
-        <ContextMenuTrigger>
+        <ContextMenuTrigger asChild>
           <div
             ref={ref}
             className={`flex flex-col items-center cursor-pointer relative ${
@@ -115,11 +112,11 @@ export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent className="z-[9999]">
-          <ContextMenuItem onClick={() => handleCopy(item)}>
+          <ContextMenuItem onClick={() => copyItem(item)}>
             <Copy className="mr-2 size-4" />
             <span>Copy</span>
           </ContextMenuItem>
-          <ContextMenuItem onClick={() => handleCut(item)}>
+          <ContextMenuItem onClick={() => cutItem(item)}>
             <Scissors className="mr-2 size-4" />
             <span>Cut</span>
           </ContextMenuItem>

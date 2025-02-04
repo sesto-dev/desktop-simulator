@@ -66,24 +66,6 @@ export const DragDropArea: React.FC<DragDropAreaProps> = ({
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
             deleteItem={deleteItem}
-            handleCopy={(item) =>
-              setModalState({
-                open: true,
-                type: "copy",
-                itemType: item.type,
-                parentId: item.parentId,
-                item,
-              })
-            }
-            handleCut={(item) =>
-              setModalState({
-                open: true,
-                type: "cut",
-                itemType: item.type,
-                parentId: item.parentId,
-                item,
-              })
-            }
           />
         ))}
       </div>

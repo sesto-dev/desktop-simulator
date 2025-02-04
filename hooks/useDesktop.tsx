@@ -313,36 +313,40 @@ export const useDesktop = (initialItems: Item[]) => {
       item,
       operation: "cut",
     });
+    setItems((prevItems) => prevItems.filter((i) => i.id !== item.id));
     toast.success(`Cut ${item.name}`);
   }, []);
 
-  const handlePaste = useCallback(() => {
-    if (!clipboard) {
-      toast.error("Clipboard is empty");
-      return;
-    }
-
-    setItems((prevItems) => {
-      const newItem = {
-        ...clipboard.item,
-        id: Date.now().toString(),
-        parentId: modalState.parentId,
-      };
-
-      if (clipboard.operation === "cut") {
-        // Remove the original item
-        const updatedItems = prevItems.filter(
-          (item) => item.id !== clipboard.item.id
-        );
-        return [...updatedItems, newItem];
-      } else {
-        return [...prevItems, newItem];
+  const handlePaste = useCallback(
+    (parentId?: string | null) => {
+      if (!clipboard) {
+        toast.error("Clipboard is empty");
+        return;
       }
-    });
 
-    setClipboard(null);
-    toast.success(`Pasted ${clipboard.item.name}`);
-  }, [clipboard, modalState.parentId]);
+      setItems((prevItems) => {
+        const newItem = {
+          ...clipboard.item,
+          id: Date.now().toString(),
+          parentId: parentId || modalState.parentId,
+        };
+
+        if (clipboard.operation === "cut") {
+          // Remove the original item
+          const updatedItems = prevItems.filter(
+            (item) => item.id !== clipboard.item.id
+          );
+          return [...updatedItems, newItem];
+        } else {
+          return [...prevItems, newItem];
+        }
+      });
+
+      setClipboard(null);
+      toast.success(`Pasted ${clipboard.item.name}`);
+    },
+    [clipboard, modalState.parentId]
+  );
 
   const handleEmptySpaceRightClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();

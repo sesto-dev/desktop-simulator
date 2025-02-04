@@ -61,9 +61,70 @@ export const useDesktop = () => {
     return null;
   }, []);
 
+  const findItemAndRemove = useCallback(
+    (items: Item[], id: string): [Item | null, Item[]] => {
+      let removedItem: Item | null = null;
+
+      const newItems = items.reduce<Item[]>((acc, item) => {
+        if (item.id === id) {
+          removedItem = { ...item };
+          return acc;
+        }
+        if (item.content) {
+          const [found, updatedContent] = findItemAndRemove(item.content, id);
+          if (found) {
+            acc.push({ ...item, content: updatedContent });
+            removedItem = found;
+            return acc;
+          }
+        }
+        acc.push(item);
+        return acc;
+      }, []);
+
+      return [removedItem, newItems];
+    },
+    []
+  );
+
+  const insertItem = useCallback(
+    (items: Item[], item: Item, targetId: string | null): Item[] => {
+      if (targetId === null) {
+        const newPath = `/desktop/${item.name}`;
+        return [...items, { ...item, parentId: null, path: newPath }];
+      }
+
+      return items.map((i) => {
+        if (i.id === targetId) {
+          const newPath = `${i.path}/${item.name}`;
+          return {
+            ...i,
+            content: i.content
+              ? [...i.content, { ...item, parentId: targetId, path: newPath }]
+              : [{ ...item, parentId: targetId, path: newPath }],
+          };
+        }
+        if (i.content) {
+          return { ...i, content: insertItem(i.content, item, targetId) };
+        }
+        return i;
+      });
+    },
+    []
+  );
+
+  const updateItemPath = useCallback((item: Item, parentPath: string): Item => {
+    const newPath = `${parentPath}/${item.name}`;
+    return {
+      ...item,
+      path: newPath,
+      content: item.content?.map((child) => updateItemPath(child, newPath)),
+    };
+  }, []);
+
   const moveItem = useCallback(
-    (draggedId: string, targetId: string | null, sourcePath: string) => {
-      if (draggedId === targetId) {
+    (item: Item, target: { id: string }) => {
+      if (item.id === target.id) {
         toast(
           "Cannot move item to the same location. Please select a different location."
         );
@@ -71,82 +132,70 @@ export const useDesktop = () => {
       }
 
       setItems((prevItems) => {
-        const findItemAndRemove = (
-          items: Item[],
-          id: string
-        ): [Item | null, Item[]] => {
-          let removedItem: Item | null = null;
-
-          const newItems = items.reduce<Item[]>((acc, item) => {
-            if (item.id === id) {
-              removedItem = { ...item };
-              return acc;
-            }
-            if (item.content) {
-              const [found, updatedContent] = findItemAndRemove(
-                item.content,
-                id
-              );
-              if (found) {
-                acc.push({ ...item, content: updatedContent });
-                removedItem = found;
-                return acc;
-              }
-            }
-            acc.push(item);
-            return acc;
-          }, []);
-
-          return [removedItem, newItems];
-        };
-
-        const [draggedItem, newItems] = findItemAndRemove(prevItems, draggedId);
+        const [draggedItem, newItems] = findItemAndRemove(prevItems, item.id);
         if (!draggedItem) return prevItems;
 
-        const insertItem = (
-          items: Item[],
-          item: Item,
-          targetId: string | null
-        ): Item[] => {
-          if (targetId === null) {
-            const newPath = `/desktop/${item.name}`;
-            return [...items, { ...item, parentId: null, path: newPath }];
-          }
+        const updatedItems = insertItem(newItems, draggedItem, target.id);
 
-          return items.map((i) => {
-            if (i.id === targetId) {
-              const newPath = `${i.path}/${item.name}`;
-              return {
-                ...i,
-                content: i.content
-                  ? [
-                      ...i.content,
-                      { ...item, parentId: targetId, path: newPath },
-                    ]
-                  : [{ ...item, parentId: targetId, path: newPath }],
-              };
-            }
-            if (i.content) {
-              return { ...i, content: insertItem(i.content, item, targetId) };
-            }
-            return i;
-          });
-        };
-
-        const updatedItems = insertItem(newItems, draggedItem, targetId);
-
-        const targetPath = targetId
-          ? getItemPath(updatedItems, targetId)
+        const targetPath = target.id
+          ? getItemPath(updatedItems, target.id)
           : "/desktop";
 
         toast.success(
-          `Transferring ${draggedItem.name} ${draggedItem.type} from ${sourcePath} to ${targetPath}`
+          `Transferring ${draggedItem.name} ${draggedItem.type} from ${item.path} to ${targetPath}`
         );
 
         return updatedItems;
       });
     },
-    [getItemPath]
+    [findItemAndRemove, insertItem, getItemPath]
+  );
+
+  const handleCut = useCallback((item: Item) => {
+    setClipboard({
+      item,
+      operation: "cut",
+    });
+    toast.success(`Cut ${item.name}`);
+  }, []);
+
+  const handleCopy = useCallback((item: Item) => {
+    setClipboard({
+      item,
+      operation: "copy",
+    });
+    toast.success(`Copied ${item.name}`);
+  }, []);
+
+  const handlePaste = useCallback(
+    (parentId?: string | null) => {
+      if (!clipboard) {
+        toast.error("Clipboard is empty");
+        return;
+      }
+
+      setItems((prevItems) => {
+        const newItem = {
+          ...clipboard.item,
+          id: Date.now().toString(),
+          parentId: parentId || modalState.parentId,
+        };
+
+        if (clipboard.operation === "cut") {
+          // Remove the original item
+          const updatedItems = prevItems.filter(
+            (item) => item.id !== clipboard.item.id
+          );
+          return insertItem(updatedItems, newItem, parentId || null);
+        } else {
+          return insertItem(prevItems, newItem, parentId || null);
+        }
+      });
+
+      setClipboard(null);
+      toast.success(`Pasted ${clipboard.item.name}`);
+    },
+    [clipboard, modalState.parentId, insertItem]
   );
 
   const handleItemOperation = useCallback(
@@ -271,17 +320,6 @@ export const useDesktop = () => {
     []
   );
 
-  const handleDragStart = useCallback((item: Item) => {
-    setClipboard({
-      item,
-      operation: "cut",
-    });
-  }, []);
-
-  const handleDragEnd = useCallback(() => {
-    setClipboard(null);
-  }, []);
-
   const deleteItem = useCallback((itemId: string) => {
     setItems((prevItems) => {
       const deleteItemRecursively = (items: Item[]): Item[] => {
@@ -302,53 +340,6 @@ export const useDesktop = () => {
 
     toast.success("Item deleted successfully.");
   }, []);
-
-  const handleCopy = useCallback((item: Item) => {
-    setClipboard({
-      item,
-      operation: "copy",
-    });
-    toast.success(`Copied ${item.name}`);
-  }, []);
-
-  const handleCut = useCallback((item: Item) => {
-    setClipboard({
-      item,
-      operation: "cut",
-    });
-    toast.success(`Cut ${item.name}`);
-  }, []);
-
-  const handlePaste = useCallback(
-    (parentId?: string | null) => {
-      if (!clipboard) {
-        toast.error("Clipboard is empty");
-        return;
-      }
-
-      setItems((prevItems) => {
-        const newItem = {
-          ...clipboard.item,
-          id: Date.now().toString(),
-          parentId: parentId || modalState.parentId,
-        };
-
-        if (clipboard.operation === "cut") {
-          // Remove the original item
-          const updatedItems = prevItems.filter(
-            (item) => item.id !== clipboard.item.id
-          );
-          return [...updatedItems, newItem];
-        } else {
-          return [...prevItems, newItem];
-        }
-      });
-
-      setClipboard(null);
-      toast.success(`Pasted ${clipboard.item.name}`);
-    },
-    [clipboard, modalState.parentId]
-  );
 
   const clearClipboard = useCallback(() => {
     setClipboard(null);
@@ -372,8 +363,6 @@ export const useDesktop = () => {
     setModalState,
     handleItemOperation,
     deleteItem,
-    handleDragStart,
-    handleDragEnd,
     handleCopy,
     handleCut,
     handlePaste,

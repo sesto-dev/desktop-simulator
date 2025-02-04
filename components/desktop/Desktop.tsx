@@ -27,9 +27,8 @@ const DesktopWrapper: React.FC = () => {
     setModalState,
     handleItemOperation,
     deleteItem,
-    handleDragStart,
-    handleDragEnd,
-    handlePaste,
+    handleCut,
+    clearClipboard,
   } = useDesktop();
 
   const handleCreateFile = (parentId?: string | null) => {
@@ -72,8 +71,8 @@ const DesktopWrapper: React.FC = () => {
               moveItem={moveItem}
               openWindow={openWindow}
               setModalState={setModalState}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
+              onDragStart={handleCut}
+              onDragEnd={clearClipboard}
               deleteItem={deleteItem}
               parentPath="/desktop"
             />
@@ -97,8 +96,8 @@ const DesktopWrapper: React.FC = () => {
                     openWindow={openWindow}
                     setModalState={setModalState}
                     parentId={windowItem.item.id}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
+                    onDragStart={handleCut}
+                    onDragEnd={clearClipboard}
                     deleteItem={deleteItem}
                     parentPath={windowItem.item.path}
                   />

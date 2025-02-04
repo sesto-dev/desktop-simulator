@@ -12,11 +12,7 @@ import { useDesktop } from "@/hooks/useDesktop";
 
 interface DesktopItemProps {
   item: Item;
-  moveItem: (
-    draggedId: string,
-    targetId: string | null,
-    sourcePath: string
-  ) => void;
+  moveItem: (item: Item, target: { id: string }) => void;
   openWindow: (item: Item) => void;
   setModalState: React.Dispatch<React.SetStateAction<ModalState>>;
   onDragStart: (item: Item) => void;
@@ -50,11 +46,7 @@ export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
       end: (_, monitor) => {
         const dropResult = monitor.getDropResult<{ id: string }>();
         if (dropResult) {
-          moveItem(
-            item.id,
-            dropResult.id === "desktop" ? null : dropResult.id,
-            item.path
-          );
+          moveItem(item, dropResult);
         }
         onDragEnd();
       },
@@ -97,9 +89,7 @@ export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
           >
             <div
               ref={(node) => {
-                if (node) {
-                  drag(node as unknown as HTMLElement);
-                }
+                drag(node as unknown as HTMLElement);
               }}
               className="p-2 flex items-center justify-center rounded-lg shadow-md border bg-neutral-800/30 backdrop-blur-xl border-neutral-800/60"
             >

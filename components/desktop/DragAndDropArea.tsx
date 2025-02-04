@@ -5,11 +5,7 @@ import type { Item, ModalState } from "@/types/desktop";
 
 interface DragDropAreaProps {
   items: Item[];
-  moveItem: (
-    draggedId: string,
-    targetId: string | null,
-    sourcePath: string
-  ) => void;
+  moveItem: (item: Item, target: { id: string }) => void;
   openWindow: (item: Item) => void;
   setModalState: React.Dispatch<React.SetStateAction<ModalState>>;
   parentId?: string | null;
@@ -42,9 +38,7 @@ export const DragDropArea: React.FC<DragDropAreaProps> = ({
   return (
     <div
       ref={(node) => {
-        if (node) {
-          drop(node as unknown as HTMLElement);
-        }
+        drop(node as unknown as HTMLElement);
       }}
       className="relative w-full h-full"
     >
@@ -53,7 +47,9 @@ export const DragDropArea: React.FC<DragDropAreaProps> = ({
       )}
       <div
         className={`grid ${
-          parentPath === "/desktop" ? "grid-cols-12" : "grid-cols-3"
+          parentPath === "/desktop"
+            ? "grid-cols-12 lg:grid-cols-10 md:grid-cols-6 sm:grid-cols-4"
+            : "grid-cols-3"
         } gap-4 p-4`}
       >
         {items.map((item) => (

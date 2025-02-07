@@ -5,12 +5,11 @@ import type { Item, ModalState } from "@/types/desktop";
 
 interface DragDropAreaProps {
   items: Item[];
-  moveItem: (item: Item, target: { id: string }) => void;
+  pasteItem: (locationId?: string | null) => void;
   openWindow: (item: Item) => void;
   setModalState: React.Dispatch<React.SetStateAction<ModalState>>;
   locationId?: string | null;
   onDragStart: (item: Item) => void;
-  onDragEnd: () => void;
   deleteItem: (itemId: string) => void;
   handleCopy: (item: Item) => void;
   handleCut: (item: Item) => void;
@@ -19,12 +18,11 @@ interface DragDropAreaProps {
 
 export const DragDropArea: React.FC<DragDropAreaProps> = ({
   items,
-  moveItem,
+  pasteItem,
   openWindow,
   setModalState,
   locationId = null,
   onDragStart,
-  onDragEnd,
   deleteItem,
   handleCopy,
   handleCut,
@@ -60,11 +58,10 @@ export const DragDropArea: React.FC<DragDropAreaProps> = ({
           <DesktopItem
             key={item.id}
             item={item}
-            moveItem={moveItem}
+            pasteItem={pasteItem}
             openWindow={openWindow}
             setModalState={setModalState}
             onDragStart={onDragStart}
-            onDragEnd={onDragEnd}
             deleteItem={deleteItem}
             handleCut={handleCut}
             handleCopy={handleCopy}

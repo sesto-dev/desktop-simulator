@@ -11,11 +11,10 @@ import type { Item, ModalState } from "@/types/desktop";
 
 interface DesktopItemProps {
   item: Item;
-  moveItem: (item: Item, target: { id: string }) => void;
+  pasteItem: (locationId?: string | null) => void;
   openWindow: (item: Item) => void;
   setModalState: React.Dispatch<React.SetStateAction<ModalState>>;
   onDragStart: (item: Item) => void;
-  onDragEnd: () => void;
   deleteItem: (itemId: string) => void;
   handleCut: (item: Item) => void;
   handleCopy: (item: Item) => void;
@@ -24,11 +23,10 @@ interface DesktopItemProps {
 export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
   ({
     item,
-    moveItem,
+    pasteItem,
     openWindow,
     setModalState,
     onDragStart,
-    onDragEnd,
     deleteItem,
     handleCopy,
     handleCut,
@@ -45,10 +43,8 @@ export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
         isDragging: !!monitor.isDragging(),
       }),
       end: (_, monitor) => {
-        const target = monitor.getDropResult<{ id: string }>();
-        if (target) moveItem(item, target);
-
-        onDragEnd();
+        const location = monitor.getDropResult<{ id: string }>();
+        if (location) pasteItem(location.id);
       },
     });
 

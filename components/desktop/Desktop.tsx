@@ -20,7 +20,7 @@ const DesktopWrapper: React.FC = () => {
     windows,
     modalState,
     desktopRef,
-    moveItem,
+    pasteItem,
     openWindow,
     closeWindow,
     minimizeWindow,
@@ -30,8 +30,6 @@ const DesktopWrapper: React.FC = () => {
     deleteItem,
     handleCopy,
     handleCut,
-    handlePaste,
-    clearClipboard,
   } = useDesktop();
 
   const handleCreateFile = (locationId?: string | null) => {
@@ -61,7 +59,7 @@ const DesktopWrapper: React.FC = () => {
         <EmptySpaceContextMenu
           onCreateFile={handleCreateFile}
           onCreateFolder={handleCreateFolder}
-          handlePaste={handlePaste}
+          handlePaste={pasteItem}
           clipboard={clipboard}
         >
           <div className="relative p-2 w-full h-full bg-background md:shadow-xl">
@@ -73,11 +71,10 @@ const DesktopWrapper: React.FC = () => {
 
             <DragDropArea
               items={items.filter((item) => item.locationId === null)}
-              moveItem={moveItem}
+              pasteItem={pasteItem}
               openWindow={openWindow}
               setModalState={setModalState}
               onDragStart={handleCut}
-              onDragEnd={clearClipboard}
               deleteItem={deleteItem}
               parentPath="/desktop"
               handleCopy={handleCopy}
@@ -96,17 +93,16 @@ const DesktopWrapper: React.FC = () => {
                   locationId={windowItem.item.id}
                   onCreateFile={handleCreateFile}
                   onCreateFolder={handleCreateFolder}
-                  handlePaste={handlePaste}
+                  handlePaste={pasteItem}
                   clipboard={clipboard}
                 >
                   <DragDropArea
                     items={windowItem.item.content || []}
-                    moveItem={moveItem}
+                    pasteItem={pasteItem}
                     openWindow={openWindow}
                     setModalState={setModalState}
                     locationId={windowItem.item.id}
                     onDragStart={handleCut}
-                    onDragEnd={clearClipboard}
                     deleteItem={deleteItem}
                     handleCopy={handleCopy}
                     handleCut={handleCut}

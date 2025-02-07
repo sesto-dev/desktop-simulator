@@ -160,6 +160,8 @@ export const useDesktop = () => {
           `Transferring ${draggedItem.name} ${draggedItem.type} from ${clipboard?.item.path} to ${targetPath}`
         );
 
+        clearClipboard();
+
         return updatedItems;
       });
     },

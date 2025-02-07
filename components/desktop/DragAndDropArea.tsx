@@ -30,7 +30,7 @@ export const DragDropArea: React.FC<DragDropAreaProps> = ({
 }) => {
   const [{ isOver, canDrop }, drop] = useDrop({
     accept: "ITEM",
-    drop: () => ({ id: locationId ?? "desktop" }),
+    drop: () => ({ id: locationId ?? null }), // return null instead of "desktop"
     collect: (monitor) => ({
       isOver: monitor.isOver({ shallow: true }),
       canDrop: monitor.canDrop(),

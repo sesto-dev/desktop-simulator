@@ -30,7 +30,9 @@ export const EmptySpaceContextMenu: React.FC<EmptySpaceContextMenuProps> = ({
 }) => {
   return (
     <ContextMenu>
-      <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
+      <ContextMenuTrigger asChild>
+        <div onContextMenu={(e) => e.stopPropagation()}>{children}</div>
+      </ContextMenuTrigger>
       <ContextMenuContent className="z-[9999]">
         <ContextMenuItem onClick={() => onCreateFile(locationId)}>
           <File className="mr-2 size-4" />

@@ -57,6 +57,7 @@ const DesktopWrapper: React.FC = () => {
       <div ref={desktopRef} className="flex h-screen w-screen">
         <AppSidebar items={items} />
         <EmptySpaceContextMenu
+          locationId="desktop"
           onCreateFile={handleCreateFile}
           onCreateFolder={handleCreateFolder}
           handlePaste={pasteItem}

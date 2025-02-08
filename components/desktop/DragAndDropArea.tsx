@@ -40,10 +40,10 @@ export const DragDropArea: React.FC<DragDropAreaProps> = ({
       className="relative w-full h-full"
     >
       {isOver && canDrop && (
-        <div className="absolute inset-0 rounded-xl animate-pulse bg-blue-200/10 flex items-center justify-center" />
+        <div className="h-full w-full absolute inset-0 rounded-xl animate-pulse bg-blue-200/10 flex items-center justify-center" />
       )}
       <div
-        className={`grid ${
+        className={`h-full w-full grid ${
           parentPath === "/desktop"
             ? "grid-cols-12 lg:grid-cols-10 md:grid-cols-6 sm:grid-cols-4"
             : "grid-cols-3"

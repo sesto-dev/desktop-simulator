@@ -8,6 +8,7 @@ import type {
 } from "@/types/desktop";
 import { initialItems } from "@/config/desktop";
 
+export type DesktopContextValue = ReturnType<typeof useDesktop>;
 export const useDesktop = () => {
   const [items, setItems] = useState<Item[]>(initialItems);
   const [windows, setWindows] = useState<WindowItem[]>([]);

@@ -2,20 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import type { ModalState } from "@/types/desktop";
+import { useDesktopContext } from "@/context/desktop";
 import { toast } from "sonner";
 
-interface ItemModalProps {
-  modalState: ModalState;
-  setModalState: React.Dispatch<React.SetStateAction<ModalState>>;
-  handleItemOperation: (name: string, link?: string) => void;
-}
-
-export const ItemModal: React.FC<ItemModalProps> = ({
-  modalState,
-  setModalState,
-  handleItemOperation,
-}) => {
+export const ItemModal: React.FC = () => {
+  const { modalState, setModalState, handleItemOperation } =
+    useDesktopContext();
   const [name, setName] = useState("");
   const [link, setLink] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -80,7 +72,6 @@ export const ItemModal: React.FC<ItemModalProps> = ({
                   item: null,
                 })
               }
-              className=""
             >
               <X className="h-6 w-4" />
             </button>

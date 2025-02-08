@@ -1,36 +1,31 @@
-// components/desktop/DragAndDropArea.tsx
 import { useDrop } from "react-dnd";
 import { DesktopItem } from "@/components/desktop/DesktopItem";
-import type { Item, ModalState } from "@/types/desktop";
+import type { Item } from "@/types/desktop";
+import { useDesktopContext } from "@/context/desktop";
 
 interface DragDropAreaProps {
   items: Item[];
-  pasteItem: (locationId?: string | null) => void;
-  openWindow: (item: Item) => void;
-  setModalState: React.Dispatch<React.SetStateAction<ModalState>>;
   locationId?: string | null;
-  onDragStart: (item: Item) => void;
-  deleteItem: (itemId: string) => void;
-  handleCopy: (item: Item) => void;
-  handleCut: (item: Item) => void;
   parentPath: string;
 }
 
 export const DragDropArea: React.FC<DragDropAreaProps> = ({
   items,
-  pasteItem,
-  openWindow,
-  setModalState,
   locationId = null,
-  onDragStart,
-  deleteItem,
-  handleCopy,
-  handleCut,
   parentPath,
 }) => {
+  const {
+    pasteItem,
+    openWindow,
+    setModalState,
+    deleteItem,
+    handleCopy,
+    handleCut,
+  } = useDesktopContext();
+
   const [{ isOver, canDrop }, drop] = useDrop({
     accept: "ITEM",
-    drop: () => ({ id: locationId ?? null }), // return null instead of "desktop"
+    drop: () => ({ id: locationId ?? null }),
     collect: (monitor) => ({
       isOver: monitor.isOver({ shallow: true }),
       canDrop: monitor.canDrop(),
@@ -55,17 +50,7 @@ export const DragDropArea: React.FC<DragDropAreaProps> = ({
         } gap-4 p-4`}
       >
         {items.map((item) => (
-          <DesktopItem
-            key={item.id}
-            item={item}
-            pasteItem={pasteItem}
-            openWindow={openWindow}
-            setModalState={setModalState}
-            onDragStart={onDragStart}
-            deleteItem={deleteItem}
-            handleCut={handleCut}
-            handleCopy={handleCopy}
-          />
+          <DesktopItem key={item.id} item={item} />
         ))}
       </div>
     </div>

@@ -3,7 +3,7 @@
 import React from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-
+import { DesktopContext } from "@/context/desktop";
 import AppSidebar from "@/components/desktop/Sidebar";
 import { DragDropArea } from "@/components/desktop/DragAndDropArea";
 import { ItemModal } from "@/components/desktop/ItemModal";
@@ -14,95 +14,45 @@ import { cn } from "@/lib/utils";
 import { useDesktop } from "@/hooks/useDesktop";
 
 const DesktopWrapper: React.FC = () => {
-  const {
-    items,
-    clipboard,
-    windows,
-    modalState,
-    desktopRef,
-    handleCreateFile,
-    handleCreateFolder,
-    pasteItem,
-    openWindow,
-    closeWindow,
-    minimizeWindow,
-    moveWindow,
-    setModalState,
-    handleItemOperation,
-    deleteItem,
-    handleCopy,
-    handleCut,
-  } = useDesktop();
+  const desktopValues = useDesktop();
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div ref={desktopRef} className="flex h-screen w-screen">
-        <AppSidebar items={items} />
-        <EmptySpaceContextMenu
-          locationId="desktop"
-          onCreateFile={handleCreateFile}
-          onCreateFolder={handleCreateFolder}
-          handlePaste={pasteItem}
-          clipboard={clipboard}
-        >
-          <div className="relative p-2 w-full h-full bg-background md:shadow-xl">
-            <DotPattern
-              className={cn(
-                "[mask-image:radial-gradient(300px_circle_at_center,white,transparent)]"
-              )}
-            />
+      <DesktopContext.Provider value={desktopValues}>
+        <div ref={desktopValues.desktopRef} className="flex h-screen w-screen">
+          <AppSidebar items={desktopValues.items} />
+          <EmptySpaceContextMenu locationId="desktop">
+            <div className="relative p-2 w-full h-full bg-background md:shadow-xl">
+              <DotPattern
+                className={cn(
+                  "[mask-image:radial-gradient(300px_circle_at_center,white,transparent)]"
+                )}
+              />
 
-            <DragDropArea
-              items={items.filter((item) => item.locationId === null)}
-              pasteItem={pasteItem}
-              openWindow={openWindow}
-              setModalState={setModalState}
-              onDragStart={handleCut}
-              deleteItem={deleteItem}
-              parentPath="/desktop"
-              handleCopy={handleCopy}
-              handleCut={handleCut}
-            />
+              <DragDropArea
+                items={desktopValues.items.filter(
+                  (item) => item.locationId === null
+                )}
+                parentPath="/desktop"
+              />
 
-            {windows.map((windowItem) => (
-              <DraggableWindow
-                key={windowItem.id}
-                windowItem={windowItem}
-                closeWindow={closeWindow}
-                minimizeWindow={minimizeWindow}
-                moveWindow={moveWindow}
-              >
-                <EmptySpaceContextMenu
-                  locationId={windowItem.item.id}
-                  onCreateFile={handleCreateFile}
-                  onCreateFolder={handleCreateFolder}
-                  handlePaste={pasteItem}
-                  clipboard={clipboard}
-                >
-                  <DragDropArea
-                    items={windowItem.item.content || []}
-                    pasteItem={pasteItem}
-                    openWindow={openWindow}
-                    setModalState={setModalState}
-                    locationId={windowItem.item.id}
-                    onDragStart={handleCut}
-                    deleteItem={deleteItem}
-                    handleCopy={handleCopy}
-                    handleCut={handleCut}
-                    parentPath={windowItem.item.path}
-                  />
-                </EmptySpaceContextMenu>
-              </DraggableWindow>
-            ))}
+              {desktopValues.windows.map((windowItem) => (
+                <DraggableWindow key={windowItem.id} windowItem={windowItem}>
+                  <EmptySpaceContextMenu locationId={windowItem.item.id}>
+                    <DragDropArea
+                      items={windowItem.item.content || []}
+                      locationId={windowItem.item.id}
+                      parentPath={windowItem.item.path}
+                    />
+                  </EmptySpaceContextMenu>
+                </DraggableWindow>
+              ))}
 
-            <ItemModal
-              modalState={modalState}
-              setModalState={setModalState}
-              handleItemOperation={handleItemOperation}
-            />
-          </div>
-        </EmptySpaceContextMenu>
-      </div>
+              <ItemModal />
+            </div>
+          </EmptySpaceContextMenu>
+        </div>
+      </DesktopContext.Provider>
     </DndProvider>
   );
 };

@@ -7,36 +7,29 @@ import {
   ContextMenuContent,
   ContextMenuItem,
 } from "@/components/ui/context-menu";
-import type { Item, ModalState } from "@/types/desktop";
+import type { Item } from "@/types/desktop";
+import { useDesktopContext } from "@/context/desktop";
 
 interface DesktopItemProps {
   item: Item;
-  pasteItem: (locationId?: string | null) => void;
-  openWindow: (item: Item) => void;
-  setModalState: React.Dispatch<React.SetStateAction<ModalState>>;
-  onDragStart: (item: Item) => void;
-  deleteItem: (itemId: string) => void;
-  handleCut: (item: Item) => void;
-  handleCopy: (item: Item) => void;
 }
 
 export const DesktopItem: React.FC<DesktopItemProps> = React.memo(
-  ({
-    item,
-    pasteItem,
-    openWindow,
-    setModalState,
-    onDragStart,
-    deleteItem,
-    handleCopy,
-    handleCut,
-  }) => {
+  ({ item }) => {
+    const {
+      pasteItem,
+      openWindow,
+      setModalState,
+      deleteItem,
+      handleCopy,
+      handleCut,
+    } = useDesktopContext();
     const ref = useRef<HTMLDivElement>(null);
 
     const [{ isDragging }, drag] = useDrag({
       type: "ITEM",
       item: () => {
-        onDragStart(item);
+        handleCut(item);
         return item;
       },
       collect: (monitor) => ({

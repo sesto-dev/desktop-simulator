@@ -20,6 +20,8 @@ const DesktopWrapper: React.FC = () => {
     windows,
     modalState,
     desktopRef,
+    handleCreateFile,
+    handleCreateFolder,
     pasteItem,
     openWindow,
     closeWindow,
@@ -31,26 +33,6 @@ const DesktopWrapper: React.FC = () => {
     handleCopy,
     handleCut,
   } = useDesktop();
-
-  const handleCreateFile = (locationId?: string | null) => {
-    setModalState({
-      open: true,
-      type: "new",
-      itemType: "file",
-      locationId: locationId || null,
-      item: null,
-    });
-  };
-
-  const handleCreateFolder = (locationId?: string | null) => {
-    setModalState({
-      open: true,
-      type: "new",
-      itemType: "folder",
-      locationId: locationId || null,
-      item: null,
-    });
-  };
 
   return (
     <DndProvider backend={HTML5Backend}>

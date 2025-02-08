@@ -38,6 +38,26 @@ export const useDesktop = () => {
     );
   }, [items]);
 
+  const handleCreateFile = (locationId?: string | null) => {
+    setModalState({
+      open: true,
+      type: "new",
+      itemType: "file",
+      locationId: locationId || null,
+      item: null,
+    });
+  };
+
+  const handleCreateFolder = (locationId?: string | null) => {
+    setModalState({
+      open: true,
+      type: "new",
+      itemType: "folder",
+      locationId: locationId || null,
+      item: null,
+    });
+  };
+
   const getItemPath = useCallback((items: Item[], itemId: string): string => {
     const findPath = (currentItems: Item[]): string | null => {
       for (const item of currentItems) {
@@ -341,6 +361,8 @@ export const useDesktop = () => {
     clipboard,
     modalState,
     desktopRef,
+    handleCreateFile,
+    handleCreateFolder,
     pasteItem,
     openWindow,
     closeWindow,

@@ -10,8 +10,8 @@ import { Inter } from "next/font/google";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Admin",
-  description: "Quantitative Application Admin Dashboard",
+  title: "Desktop Simulator",
+  description: "Drag and drop folders and files on a desktop simulator.",
 };
 
 export default function RootLayout({

@@ -9,7 +9,7 @@ import { DragDropArea } from "@/components/desktop/DragAndDropArea";
 import { ItemModal } from "@/components/desktop/ItemModal";
 import { DraggableWindow } from "@/components/desktop/DraggableWindow";
 import { EmptySpaceContextMenu } from "@/components/desktop/EmptySpaceContextMenu";
-import DotPattern from "../ui/dot-pattern";
+import DotPattern from "@/components/magicui/dot-pattern";
 import { cn } from "@/lib/utils";
 import { useDesktop } from "@/hooks/useDesktop";
 
